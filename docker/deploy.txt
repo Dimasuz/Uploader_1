@@ -1,0 +1,86 @@
+- проверка соединения
+ping 194.67.111.29
+
+Создание ключа ssh:
+- создать
+sudo ssh-keygen
+- копировать
+sudo cat ~/.ssh/id_rsa.pub
+
+- подключаемся к серверу
+ssh root@194.67.111.29
+
+- создаем нового пользователя на сервере
+adduser diplom
+- назначаем его админом
+usermod diplom -aG sudo
+- переключаемся на него
+su diplom
+- переходим в домашнюю директорию
+cd ~
+
+- обновляем пакеты
+sudo apt update
+sudo apt install python3-pip
+
+- проверяем версии
+git --version
+python3 --version
+
+- копируем ссылку с github и делаем git clone
+git clone https://github.com/Dimasuz/python-final-diplom_1.git
+- копируем рабочий каталог в корень
+sudo cp -rT /net... ~
+
+- создаем файл зависимостей
+nano .env
+<-----------------------------------------------
+SECRET_KEY=dbaa1_i7%*3r9-=z-+_mz4r-!qeed@(-a_r(g@k8jo8y3r27%m
+DEBUG=0
+DJANGO_DB=postgresql
+POSTGRES_HOST=postgres
+POSTGRES_NAME=postgres
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=postgres
+POSTGRES_PORT=5432
+PGDATA=/var/lib/postgresql/data
+EMAIL_HOST=smtp.mail.ru
+EMAIL_HOST_USER=
+EMAIL_HOST_PASSWORD=
+CELERY_BROKER_URL=redis://redis:6379/0
+CELERY_RESULT_BACKEND=redis://redis:6379/1
+-------------------------------------->
+
+-создаем контейнеры
+sudo docker compose up redis -d
+sudo docker compose up postgres -d
+sudo docker compose up pgadmin -d
+sudo docker compose up web -d
+sudo docker compose up celery -d
+или все сразу
+sudo docker compose up
+
+- войти в контейнер web
+sudo docker exec -it web bash
+- создать суперпользователя
+sudo pyrhon manage.py createsuperuser
+
+Полезные команды:
+- проверка портов
+sudo netstat -ltnp
+-если порт занят его надо освободить
+fuser -k 8000/tcp
+
+команды docker:
+- удаление всех контейнеров
+docker compose down
+- удаление контейнера
+docker rm <544746864>
+sudo docker stop ba9376a90098
+- image
+docker image ls
+docker image -aq
+docker rmi <544746864>
+- volume
+docker volume ls
+docker volume prune

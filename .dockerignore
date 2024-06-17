@@ -1,0 +1,8 @@
+venv
+db*
+tests/
+pytest.ini
+client.py
+client_api.py
+.pytest_cache/
+docker/

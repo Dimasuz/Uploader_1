@@ -1,0 +1,15 @@
+FROM dimasuz/ubuntu2004_python310:v2
+
+# попробовать
+# RUN apt install lsb-release curl gpg
+# sudo apt-get update
+# sudo apt-get install redis
+
+RUN apt update \
+    && apt install -y libpq-dev
+
+COPY requirements.txt /usr/src/app/requirements.txt
+WORKDIR /usr/src/app
+RUN python3 -m pip install --no-cache-dir -r requirements.txt
+
+# sudo docker image build -f Dockerfile.v3 -t dimasuz/ubuntu2004_python310:v3 .

@@ -1,0 +1,16 @@
+FROM ubuntu:22.04
+
+MAINTAINER Dimasuz
+
+ARG DEBIAN_FRONTEND=noninteractive
+ENV TZ=Europe/Moscow
+
+RUN apt update \
+    && apt install -y tzdata python3.10 python3-pip \
+    && python3 -m pip install --upgrade pip \
+    && apt clean && rm -rf /var/lib/apt/lists/*
+
+ENV PYTHONDONTWRITEBYTECODE 1
+ENV PYTHONUNBUFFERED 1
+
+# docker image build -t dimasuz/ubuntu2004_python310:v1 .

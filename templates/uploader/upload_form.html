@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+
+<div style="padding:40px;margin:40px;border:1px solid #ccc">
+    <h1>Django File Upload</h1>
+    <form method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+      {{ form.as_p }}
+      <button type="submit">Submit</button>
+    </form><hr>
+    <ul>
+    {% for file in files %}
+        <li>
+            <a href="{{ file.upload_file.url }}">{{ file.upload_file.name }}</a>
+            <small>({{ file.upload_file.size|filesizeformat }}) - {{file.upload_date}}</small>
+        </li>
+    {% endfor %}
+    </ul>
+</div>
