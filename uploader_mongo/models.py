@@ -1,7 +1,7 @@
 import datetime
 import os
 
-from mongoengine import connect, Document, FileField, DateTimeField, LongField
+from mongoengine import DateTimeField, Document, FileField, LongField, connect
 
 mongo_db_name = os.environ.get("MONGO_DB_NAME", "db_mongo")
 mongo_db_host = os.environ.get("MONGO_DB_HOST", "localhost")

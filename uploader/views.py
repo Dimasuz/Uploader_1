@@ -7,7 +7,7 @@ from celery.result import AsyncResult
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import FileResponse, JsonResponse
 from drf_spectacular.utils import extend_schema, inline_serializer
-from rest_framework import status, serializers
+from rest_framework import serializers, status
 from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response

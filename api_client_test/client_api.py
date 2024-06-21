@@ -7,14 +7,18 @@ from tempfile import NamedTemporaryFile
 
 import requests
 
-# url_adress = "89.111.174.130"
-url_port = "8000"
-api_version = "api/v1"
+TOKEN = ""
+
 # url_adress = "0:0:0:0"
 url_adress = "127.0.0.1"
+# url_adress = "95.163.222.43"
+url_port = "8000"
+api_version = "api/v1"
 url_base = f"http://{url_adress}:{url_port}/{api_version}/"
 
 # url_base = 'http://0.0.0.0:8000/api/v1/auth0/'
+
+time_now = str(datetime.now())[11:20]
 
 
 def base_request(
@@ -171,7 +175,7 @@ def logout(token=None):
     return response
 
 
-# logout user-----------------------
+# delete user-----------------------
 def delete(token=None):
     url_view = "user/delete/"
     if not token:
@@ -223,7 +227,7 @@ def upload(token=None, data=None):
     if not token:
         token = input("Введите token пользователя = ")
     headers = get_headers(token=token)
-    uploaded_file_time = str(datetime.now())
+    uploaded_file_time = time_now
     uploaded_file_name = f"test_{uploaded_file_time[:19]}_uploaded_file.txt"
     with NamedTemporaryFile(
         "w+b", prefix="uploaded_file_name", suffix="uploaded_file_ext"
@@ -271,7 +275,7 @@ def download(
         filename = filename[start_index:-1]
 
         # downloaded_file_name = f"test_{response.text[9:28]}_download_file.txt"
-        downloaded_file_time = str(datetime.now())
+        downloaded_file_time = time_now
         downloaded_file_name = (
             f"test_{filename}_download_time_{downloaded_file_time[:19]}.txt"
         )
@@ -412,21 +416,22 @@ def api_test(token=None, url_store="disk"):
             # email = input("Введите {адрес} @mail.ru: ")
             # email = email + "@mail.ru"
             # token = login(email=email)
-            # details_get(token)
-            details_get(token=token)
+            details_get(token)
         # изменение данных пользователя
         elif a == "7":
             email = input("Введите {адрес} @mail.ru: ")
             email = email + "@mail.ru"
             # print("Входим в систему.")
             # token = login(email=email)
-            print('Меняем данные пользователя добавив "_new".')
-            password_new = f"Password_{email}_new"
-            # password_new = 'new'
+            # получаем текущие данные пользователя
+            data_old = details_get(token).json()
+            print(data_old)
+            print(f'Меняем данные пользователя добавив "new_{time_now}_".')
+            password_new = f"new_Password_{email}"
             data = {
-                "first_name": f"first_name_{email}_new",
-                "last_name": f"last_name_6021185@mail.ru{email}_new",
-                "password": password_new,
+                "first_name": f"new_{time_now}_{data_old['first_name']}",
+                "last_name": f"new_{time_now}_{data_old['last_name']}",
+                # "password": password_new,
             }
             details_post(token=token, **data)
             details_get(token=token)
@@ -435,11 +440,7 @@ def api_test(token=None, url_store="disk"):
             if input("Меняем данные пользователя обратно? Y "):
                 print("Входим в систему.")
                 token = login(email=email, password=password_new)
-                data = {
-                    "first_name": f"first_name_{email}",
-                    "last_name": f"last_name_{email}",
-                    "password": f"Password_{email}",
-                }
+                data = data_old + {"password": f"Password_{email}"}
                 details_post(token, **data)
                 details_get(token)
                 print("Выходим из системы")
@@ -525,7 +526,7 @@ def api_test(token=None, url_store="disk"):
 
 
 if __name__ == "__main__":
-    token = "10cf48985c13b59cd8f44eef750fe3456503a0b2"
+    token = TOKEN
 
     # url_list = ['disk', 'db']
     # url_store = url_list[1]
@@ -533,3 +534,7 @@ if __name__ == "__main__":
 
     # curl --location --request POST 'http://localhost:8000/api/upload-file/' \
     # --form 'file=@"/path/to/yourfile.pdf"'
+
+# from django.conf import settings
+# from django.core.cache import cache
+# cache_keys = cache._cache.get_cient().keys(f"*{settings.CACHES['default']['KEY_PREFIX']}*")

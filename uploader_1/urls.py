@@ -1,16 +1,14 @@
+from debug_toolbar import urls as debug_urls
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path
-from drf_spectacular.views import (
-    SpectacularAPIView,
-    SpectacularRedocView,
-    SpectacularSwaggerView,
-)
-from debug_toolbar import urls as debug_urls
+from drf_spectacular.views import (SpectacularAPIView, SpectacularRedocView,
+                                   SpectacularSwaggerView)
+
 from regloginout.views import index
-from uploader_1.settings import API_VERTION
 from uploader.views import CeleryStatus
+from uploader_1.settings import API_VERTION
 
 api_vertion = API_VERTION
 

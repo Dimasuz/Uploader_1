@@ -398,5 +398,8 @@ CACHES = {
     "default": {
         "BACKEND": "django.core.cache.backends.redis.RedisCache",
         "LOCATION": os.environ.get("LOCATION_CACHE_REDIS", "redis://127.0.0.1:6379"),
+        "KEY_PREFIX": "uploader_1",
+        "VERSION": 9,
+        "TIMEOUT": 10,
     }
 }

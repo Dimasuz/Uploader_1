@@ -1,6 +1,6 @@
 import os
-from datetime import datetime
 import smtplib
+from datetime import datetime
 
 EMAIL_HOST = os.environ.get("EMAIL_HOST", "test.mail.ru")
 EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", "test@mail.ru")

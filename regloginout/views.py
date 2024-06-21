@@ -1,5 +1,7 @@
+from django.conf import settings
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.password_validation import validate_password
+from django.core.cache import cache
 from django.http import JsonResponse
 from django.shortcuts import render
 from drf_spectacular.utils import extend_schema
@@ -15,6 +17,24 @@ from regloginout.signals import new_user_registered
 
 def index(request):
     return render(request, "regloginout/index.html")
+
+
+def cache_clear():
+    # clear whole cache
+    # cache.clear()
+    # clear app cache by prefix
+    cache_key_prefix = settings.CACHES["default"]["KEY_PREFIX"]
+    cache_version = str(settings.CACHES["default"]["VERSION"])
+    key_list_by_prefix = cache._cache.get_client().keys(f"*{cache_key_prefix}*")
+    # the keys has view: "KEY_PREFIX:VERSION:KEY_BODY", so we need only KEY_BODY
+    # key_list = [i.decode().split(':')[-1] for i in key_list_by_prefix] # not so good there could be more ":"
+    key_list = [
+        i.decode()[len(cache_key_prefix) + len(cache_version) + 2:]
+        for i in key_list_by_prefix
+    ]
+    cache.delete_many(key_list)
+
+    return not bool(cache._cache.get_client().keys(f"*{cache_key_prefix}*"))
 
 
 # decorators @extend_schema is for OPEN API
@@ -191,6 +211,7 @@ class DeleteAccount(APIView):
             )
 
         request.user.delete()
+        cache_clear()
 
         return JsonResponse({"Status": True})
 
@@ -240,6 +261,7 @@ class UserDetails(APIView):
         user_serializer = UserSerializer(request.user, data=request.data, partial=True)
         if user_serializer.is_valid():
             user_serializer.save()
+            cache_clear()
             return JsonResponse({"Status": True})
         else:
             return JsonResponse({"Status": False, "Errors": user_serializer.errors})

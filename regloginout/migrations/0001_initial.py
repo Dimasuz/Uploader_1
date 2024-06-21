@@ -3,9 +3,10 @@
 import django.contrib.auth.validators
 import django.db.models.deletion
 import django.utils.timezone
-import regloginout.models
 from django.conf import settings
 from django.db import migrations, models
+
+import regloginout.models
 
 
 class Migration(migrations.Migration):

@@ -1,20 +1,20 @@
 import asyncio
 from datetime import datetime, timedelta
 
+from asgiref.sync import sync_to_async
 from celery.result import AsyncResult
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import FileResponse, JsonResponse
-
-from asgiref.sync import sync_to_async
+from mongoengine import DoesNotExist, ValidationError
 from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.permissions import AllowAny
 from rest_framework.views import APIView
-from mongoengine import DoesNotExist, ValidationError
 
-from .models import UploadFileMongo
 from regloginout.models import User
 from uploader_1.settings import MAX_TIME_UPLOAD_FILE
 from uploader_1.tasks import processing_file_mongo
+
+from .models import UploadFileMongo
 
 
 # @extend_schema(

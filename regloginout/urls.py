@@ -1,17 +1,10 @@
 from django.urls import path
-from django_rest_passwordreset.views import (
-    reset_password_confirm,
-    reset_password_request_token,
-)
 from django.views.decorators.cache import cache_page
-from regloginout.views import (
-    ConfirmAccount,
-    DeleteAccount,
-    LoginAccount,
-    LogoutAccount,
-    RegisterAccount,
-    UserDetails,
-)
+from django_rest_passwordreset.views import (reset_password_confirm,
+                                             reset_password_request_token)
+
+from regloginout.views import (ConfirmAccount, DeleteAccount, LoginAccount,
+                               LogoutAccount, RegisterAccount, UserDetails)
 
 app_name = "regloginout"
 

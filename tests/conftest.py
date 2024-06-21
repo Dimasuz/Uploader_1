@@ -1,12 +1,12 @@
 import os
-import uuid
 import random
+import uuid
 from datetime import datetime
 
 import pytest
+from django.core.cache import cache
 from model_bakery import baker
 from rest_framework.authtoken.models import Token
-from django.core.cache import cache
 
 from regloginout.models import ConfirmEmailToken, User
 
@@ -47,8 +47,7 @@ def django_db_multiple():
     """
     from _pytest.monkeypatch import MonkeyPatch
     from django.conf import settings
-    from django.test import TestCase
-    from django.test import TransactionTestCase
+    from django.test import TestCase, TransactionTestCase
 
     db_keys = set(settings.DATABASES.keys())
 
