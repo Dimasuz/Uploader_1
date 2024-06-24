@@ -12,7 +12,7 @@ from rest_framework.views import APIView
 
 from regloginout.models import ConfirmEmailToken
 from regloginout.serializers import UserSerializer
-from regloginout.signals import new_user_registered
+from regloginout.signals import user_send_massage
 
 
 def index(request):
@@ -29,7 +29,7 @@ def cache_clear():
     # the keys has view: "KEY_PREFIX:VERSION:KEY_BODY", so we need only KEY_BODY
     # key_list = [i.decode().split(':')[-1] for i in key_list_by_prefix] # not so good there could be more ":"
     key_list = [
-        i.decode()[len(cache_key_prefix) + len(cache_version) + 2:]
+        i.decode()[len(cache_key_prefix) + len(cache_version) + 2 :]
         for i in key_list_by_prefix
     ]
     cache.delete_many(key_list)
@@ -75,15 +75,19 @@ class RegisterAccount(APIView):
                     user = user_serializer.save()
                     user.set_password(request.data["password"])
                     user.save()
+                    token, _ = ConfirmEmailToken.objects.get_or_create(user_id=user.id)
                     # для применения celery возвращаем task задачи для возможности контроля ее выполнения
-                    send_mail = new_user_registered.send(
-                        sender=self.__class__, user_id=user.id
+                    send_mail = user_send_massage.send(
+                        sender=self.__class__,
+                        email=user.email,
+                        title=f"Token conformation for {user.email}",
+                        massage=token.key,
                     )
                     return JsonResponse(
                         {
                             "Status": True,
                             "task_id": send_mail[0][1]["task_id"],
-                            "token": send_mail[0][1]["token"],
+                            "token": token.key,
                         }
                     )
                 else:
@@ -156,7 +160,19 @@ class LoginAccount(APIView):
                 if user.is_active:
                     token, _ = Token.objects.get_or_create(user=user)
                     login(request, user)
-                    return JsonResponse({"Status": True, "Token": token.key})
+                    send_mail = user_send_massage.send(
+                        sender=self.__class__,
+                        email=user.email,
+                        title=f"Token login for {user.email}",
+                        massage=token.key,
+                    )
+                    return JsonResponse(
+                        {
+                            "Status": True,
+                            "Token": token.key,
+                            "task_id": send_mail[0][1]["task_id"],
+                        }
+                    )
                 else:
                     JsonResponse(
                         {"Status": False, "Errors": "User is not active"},
@@ -193,6 +209,7 @@ class LogoutAccount(APIView):
 
         request.user.auth_token.delete()
         logout(request)
+        cache_clear()
 
         return JsonResponse({"Status": True})
 
@@ -261,7 +278,18 @@ class UserDetails(APIView):
         user_serializer = UserSerializer(request.user, data=request.data, partial=True)
         if user_serializer.is_valid():
             user_serializer.save()
+            send_mail = user_send_massage.send(
+                sender=self.__class__,
+                email=request.user.email,
+                title="Change details.",
+                massage=f"The details was change. New details is {request.data.dict()}",
+            )
             cache_clear()
-            return JsonResponse({"Status": True})
+            return JsonResponse(
+                {
+                    "Status": True,
+                    "task_id": send_mail[0][1]["task_id"],
+                }
+            )
         else:
             return JsonResponse({"Status": False, "Errors": user_serializer.errors})

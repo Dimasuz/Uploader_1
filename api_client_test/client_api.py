@@ -7,16 +7,20 @@ from tempfile import NamedTemporaryFile
 
 import requests
 
-TOKEN = ""
+TOKEN = "ea5ea4c78cfe159d6add3b937cbe86c6fee1299c"
 
 # url_adress = "0:0:0:0"
 url_adress = "127.0.0.1"
-# url_adress = "95.163.222.43"
+# url_adress = "79.174.82.110"
 url_port = "8000"
 api_version = "api/v1"
 url_base = f"http://{url_adress}:{url_port}/{api_version}/"
 
 # url_base = 'http://0.0.0.0:8000/api/v1/auth0/'
+
+# add_url_file_view = ""
+add_url_file_view = "mongo/"
+
 
 time_now = str(datetime.now())[11:20]
 
@@ -216,9 +220,6 @@ def password_reset_confirm(token=None, password=None):
 
 # ------------------------------------
 # UPLOAD FILE
-
-# add_url_file_view = ""
-add_url_file_view = "mongo/"
 
 
 # file/upload/

@@ -33,7 +33,7 @@ def processing_file(file_path):
 
     with open(file_path, "rb+") as f:
         f.seek(0, 2)
-        f.write(f"\ncelery_{datetime.now()}".encode())
+        f.write(f"\nprocessing_file_celery_{datetime.now()}".encode())
 
     return file_path
 
@@ -48,7 +48,7 @@ def processing_file_mongo(file_id):
     content_type = file_celery.file.content_type
     filename = file_celery.file.filename
     file_content = file_celery.file.read()
-    file_content += f"\ncelery_{datetime.now()}".encode()
+    file_content += f"\nprocessing_file_mongo_celery_{datetime.now()}".encode()
     file_celery.file.replace(file_content, content_type=content_type, filename=filename)
     file_modify = file_celery.save()
 

@@ -1,22 +1,21 @@
 from django.dispatch import Signal, receiver
 from django_rest_passwordreset.signals import reset_password_token_created
 
-from regloginout.models import ConfirmEmailToken
 from uploader_1.tasks import send_email
 
-new_user_registered: Signal = Signal("user_id")
+user_send_massage: Signal = Signal()
 
 
-@receiver(new_user_registered)
-def new_user_registered_signal(user_id, **kwargs):
+@receiver(user_send_massage)
+def user_send_massage_signal(email, title, massage, **kwargs):
     # send an e-mail to the user
-    token, _ = ConfirmEmailToken.objects.get_or_create(user_id=user_id)
     async_result = send_email.delay(
-        token.user.email, f"Password Token for {token.user.email}", token.key
+        email,
+        title,
+        massage,
     )
     return {
         "task_id": async_result.task_id,
-        "token": token.key,
     }
 
 

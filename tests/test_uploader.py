@@ -15,7 +15,7 @@ url_view = "file/"
 url = URL_BASE + url_view
 
 
-# file/upload/
+# upload
 # @pytest.mark.parametrize("tmp_file", ["txt", "exe"], indirect=True)
 @pytest.mark.parametrize("tmp_file", ["txt"], indirect=True)
 def test_upload(login, tmp_file):
@@ -47,6 +47,7 @@ def test_upload(login, tmp_file):
     os.remove(file_path)
 
 
+# upload wrong user
 @pytest.mark.parametrize("tmp_file", ["txt"], indirect=True)
 def test_upload_not_authorization(login, tmp_file):
     api_client, user, token = login
@@ -74,7 +75,7 @@ def test_upload_not_authorization(login, tmp_file):
     assert response.status_code == 401
 
 
-# file/download/
+# download
 @pytest.mark.parametrize("tmp_file", ["txt"], indirect=True)
 def test_download(login, tmp_file):
     # prepare file by POST
@@ -114,7 +115,7 @@ def test_download(login, tmp_file):
     os.remove(file_path)
 
 
-# file/download/ - wrong user
+# download wrong user
 @pytest.mark.parametrize("tmp_file", ["txt"], indirect=True)
 def test_download_wrong_user(login, tmp_file, create_token):
     # prepare file
@@ -158,6 +159,7 @@ def test_download_wrong_user(login, tmp_file, create_token):
     assert response.json()["Error"] == "You try to get not yours file."
 
 
+# processing file
 @pytest.mark.parametrize("tmp_file", ["txt"], indirect=True)
 def test_processing_file(login, tmp_file):
     # prepare file
@@ -194,6 +196,7 @@ def test_processing_file(login, tmp_file):
     os.remove(file_path)
 
 
+# delete file
 @pytest.mark.parametrize("tmp_file", ["txt"], indirect=True)
 def test_delete_file(login, tmp_file):
     # prepare file

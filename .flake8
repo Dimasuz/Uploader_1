@@ -45,6 +45,8 @@ ignore =
     E402
     # function is too complex
     C901
+    # whitespace before ':'
+    E203
 
 # Excluding some directories:
 exclude =
