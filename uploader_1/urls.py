@@ -6,8 +6,7 @@ from django.urls import include, path
 from drf_spectacular.views import (SpectacularAPIView, SpectacularRedocView,
                                    SpectacularSwaggerView)
 
-from regloginout.views import index
-from uploader.views import CeleryStatus
+from regloginout.views import CeleryStatus, index
 from uploader_1.settings import API_VERTION
 
 api_vertion = API_VERTION
@@ -37,9 +36,9 @@ urlpatterns = [
     # доступ к описанию проекта из API
     path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
     path(
-        "api/schema/swagger-ui/",
+        "api/schema/docs/",
         SpectacularSwaggerView.as_view(url_name="schema"),
-        name="swagger-ui",
+        name="docs",
     ),
     path(
         "api/schema/redoc/",

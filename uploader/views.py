@@ -3,13 +3,13 @@ import os.path
 from contextlib import suppress
 from datetime import datetime, timedelta
 
-from celery.result import AsyncResult
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import FileResponse, JsonResponse
-from drf_spectacular.utils import extend_schema, inline_serializer
+from drf_spectacular.utils import (OpenApiExample, OpenApiParameter,
+                                   OpenApiResponse, extend_schema,
+                                   inline_serializer)
 from rest_framework import serializers, status
 from rest_framework.parsers import FormParser, MultiPartParser
-from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -22,16 +22,7 @@ from .serializers import UploadFileSerializer
 
 
 @extend_schema(
-    request=UploadFileSerializer,
-    responses={
-        201: inline_serializer(
-            name="UploadFile",
-            fields={
-                "Status": serializers.BooleanField(),
-                "File_id": serializers.CharField(),
-            },
-        ),
-    },
+    tags=["file/"],
 )
 class FileUploadAPIView(APIView):
     """Upload file"""
@@ -60,6 +51,32 @@ class FileUploadAPIView(APIView):
         task.cancel()
         return {"Status": False, "Error": "UPLOAD_TIMED_OUT"}
 
+    @extend_schema(
+        summary="File upload",
+        parameters=[
+            OpenApiParameter(
+                name="token", location=OpenApiParameter.HEADER, required=True, type=str
+            ),
+            OpenApiParameter(
+                name="file", location=OpenApiParameter.PATH, required=True, type=str
+            ),
+            OpenApiParameter(
+                name="sync_mode",
+                location=OpenApiParameter.QUERY,
+                required=False,
+                type=bool,
+            ),
+        ],
+        responses={
+            201: inline_serializer(
+                name="UploadFile",
+                fields={
+                    "Status": serializers.BooleanField(),
+                    "File_id": serializers.CharField(),
+                },
+            ),
+        },
+    )
     def post(self, request):
 
         if not request.user.is_authenticated:
@@ -129,6 +146,30 @@ class FileUploadAPIView(APIView):
     # Download file by method GET
     """GET"""
 
+    @extend_schema(
+        summary="File download",
+        parameters=[
+            OpenApiParameter(
+                name="token", location=OpenApiParameter.HEADER, required=True, type=str
+            ),
+            OpenApiParameter(
+                name="file_id", location=OpenApiParameter.QUERY, required=True, type=str
+            ),
+        ],
+        responses={
+            200: OpenApiResponse(
+                response=bytes,
+                description="Successful file download",
+                examples=[
+                    OpenApiExample(
+                        "Response example",
+                        description="File delete response example",
+                        status_codes=[str(status.HTTP_200_OK)],
+                    )
+                ],
+            )
+        },
+    )
     def get(self, request, *args, **kwargs):
 
         download_file = self.check_user_file_id(request)
@@ -160,6 +201,37 @@ class FileUploadAPIView(APIView):
 
     """DELETE"""
 
+    @extend_schema(
+        summary="File delete",
+        parameters=[
+            OpenApiParameter(
+                name="token", location=OpenApiParameter.HEADER, required=True, type=str
+            ),
+            OpenApiParameter(
+                name="file_id",
+                location=OpenApiParameter.QUERY,
+                required=True,
+                type=str,
+            ),
+        ],
+        responses={
+            200: OpenApiResponse(
+                response=dict,
+                description="Successful file delete",
+                examples=[
+                    OpenApiExample(
+                        "Response example",
+                        description="File delete response example",
+                        value={
+                            "Status": True,
+                            "Files_deleted": 1,
+                        },
+                        status_codes=[str(status.HTTP_200_OK)],
+                    )
+                ],
+            )
+        },
+    )
     def delete(self, request, *args, **kwargs):
 
         uploaded_file = self.check_user_file_id(request)
@@ -182,6 +254,37 @@ class FileUploadAPIView(APIView):
 
     """PUT"""
 
+    @extend_schema(
+        summary="File modification",
+        parameters=[
+            OpenApiParameter(
+                name="token", location=OpenApiParameter.HEADER, required=True, type=str
+            ),
+            OpenApiParameter(
+                name="file_id",
+                location=OpenApiParameter.QUERY,
+                required=True,
+                type=str,
+            ),
+        ],
+        responses={
+            202: OpenApiResponse(
+                response=dict,
+                description="Successful file modification",
+                examples=[
+                    OpenApiExample(
+                        "Response example",
+                        description="File modification response example",
+                        value={
+                            "Status": True,
+                            "Task_id": "celery_task.id",
+                        },
+                        status_codes=[str(status.HTTP_202_ACCEPTED)],
+                    )
+                ],
+            )
+        },
+    )
     # Processing file by method PUT
     def put(self, request, *args, **kwargs):
 
@@ -206,27 +309,3 @@ class FileUploadAPIView(APIView):
             },
             status=201,
         )
-
-
-class CeleryStatus(APIView):
-    """
-    Класс для получения статуса отлооженных задач в Celery
-    """
-
-    # Получение сатуса задач Celery методом GET
-    permission_classes = [AllowAny]
-
-    def get(self, request, *args, **kwargs):
-        task_id = request.query_params.get("task_id")
-        if task_id:
-            try:
-                task = AsyncResult(task_id)
-                task_status = task.status
-                task_result = task.ready()
-                return JsonResponse(
-                    {"Status": task_status, "Result": task_result}, status=200
-                )
-            except Exception as err:
-                return err
-
-        return JsonResponse({"Status": False, "Error": "Task_id required"}, status=400)

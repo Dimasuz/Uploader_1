@@ -7,7 +7,7 @@ from tempfile import NamedTemporaryFile
 
 import requests
 
-TOKEN = "ea5ea4c78cfe159d6add3b937cbe86c6fee1299c"
+TOKEN = "1988486fcc5926a1cd9ca47b14e89b8793ec2c5a"
 
 # url_adress = "0:0:0:0"
 url_adress = "127.0.0.1"
@@ -55,6 +55,8 @@ def base_request(
     except BaseException as e:
         print("JSON ERROR:")
         pprint(e)
+        print("RESPONSE TEXT:")
+        pprint(response.text)
         return response, None
     else:
         print("JSON:")
@@ -95,8 +97,8 @@ def user_register(email=None, password=None):
             task_id = None
             token_confirm = None
         else:
-            task_id = response.json()["task_id"]
-            token_confirm = response.json()["token"]
+            task_id = response.json()["Task_id"]
+            token_confirm = response.json()["Token"]
     else:
         task_id = None
         token_confirm = None
@@ -349,7 +351,7 @@ def celery_status(task_id=None):
         while celery_status != "SUCCESS":
             #  or celery_status != 'FAILURE'
             response, json_status = base_request(
-                url_view=url_view, method="get", params={"task_id": task_id}
+                url_view=url_view, method="get", params={"Task_id": task_id}
             )
             celery_status = response.json()["Status"]
             file = response.json()["Result"]
@@ -376,10 +378,9 @@ def api_test(token=None, url_store="disk"):
             _, token = user_register(email=email, password=password)
             confirm(email=email, token=token)
             token = login(email=email)
-            if input("Continue with logout/delete? Y: "):
-                logout(token)
-                token = login(email=email)
-                delete(token)
+            logout(token)
+            token = login(email=email)
+            delete(token)
 
         elif a == "1":
             email = input("Введите {адрес} @mail.ru: ")
@@ -388,7 +389,7 @@ def api_test(token=None, url_store="disk"):
             response = user_register(email=email, password=password)
             celery = input("Запросить очередь celery? ")
             if celery:
-                celery_status(response["task_id"])
+                celery_status(response["Task_id"])
             else:
                 return
         # подтверждение почты нового пользователя
@@ -400,7 +401,7 @@ def api_test(token=None, url_store="disk"):
         elif a == "3":
             email = input("Введите {адрес} @mail.ru: ")
             email = email + "@mail.ru"
-            if input("Стандартный пароль? Y "):
+            if not input("Стандартный пароль? Y(enter)/N"):
                 login(email=email)
             else:
                 password = input("Введите пароль: ")

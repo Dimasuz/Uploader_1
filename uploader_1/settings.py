@@ -324,6 +324,8 @@ API_VERTION = "v1"
 
 
 SPECTACULAR_DEFAULTS = {
+    "TITLE": "Project Uploder files API",
+    "DESCRIPTION": "Testing task for junior python dev.",
     "SCHEMA_PATH_PREFIX": None,
     "SCHEMA_PATH_PREFIX_TRIM": False,
     "SCHEMA_PATH_PREFIX_INSERT": "",
@@ -336,7 +338,7 @@ SPECTACULAR_DEFAULTS = {
     "OAS_VERSION": "3.0.3",
     "SERVE_URLCONF": None,
     "SERVE_PUBLIC": True,
-    "SERVE_INCLUDE_SCHEMA": True,
+    "SERVE_INCLUDE_SCHEMA": False,
     # list of authentication/permission classes for spectacular's views.
     "SERVE_PERMISSIONS": [
         "rest_framework.permissions.IsAuthenticated",
@@ -375,8 +377,6 @@ SPECTACULAR_DEFAULTS = {
     "RENDERER_WHITELIST": None,
     "DISABLE_ERRORS_AND_WARNINGS": False,
     "ENABLE_DJANGO_DEPLOY_CHECK": True,
-    "TITLE": "Project Appstorespy API",
-    "DESCRIPTION": "Testing task for junior python dev",
     "TOS": None,
     "CONTACT": {},
     "LICENSE": {},

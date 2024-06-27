@@ -1,10 +1,13 @@
+from celery.result import AsyncResult
 from django.conf import settings
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.password_validation import validate_password
 from django.core.cache import cache
 from django.http import JsonResponse
 from django.shortcuts import render
-from drf_spectacular.utils import extend_schema
+from drf_spectacular.utils import (OpenApiExample, OpenApiParameter,
+                                   OpenApiResponse, extend_schema)
+from rest_framework import status
 from rest_framework.authtoken.models import Token
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
@@ -26,7 +29,7 @@ def cache_clear():
     cache_key_prefix = settings.CACHES["default"]["KEY_PREFIX"]
     cache_version = str(settings.CACHES["default"]["VERSION"])
     key_list_by_prefix = cache._cache.get_client().keys(f"*{cache_key_prefix}*")
-    # the keys has view: "KEY_PREFIX:VERSION:KEY_BODY", so we need only KEY_BODY
+    # the keys have a view: "KEY_PREFIX:VERSION:KEY_BODY", so we need only KEY_BODY
     # key_list = [i.decode().split(':')[-1] for i in key_list_by_prefix] # not so good there could be more ":"
     key_list = [
         i.decode()[len(cache_key_prefix) + len(cache_version) + 2 :]
@@ -39,8 +42,40 @@ def cache_clear():
 
 # decorators @extend_schema is for OPEN API
 @extend_schema(
-    request=UserSerializer,
-    responses={201: UserSerializer},
+    tags=["user/"],
+    summary="User registration",
+    parameters=[
+        OpenApiParameter(
+            name="email", location=OpenApiParameter.QUERY, required=True, type=str
+        ),
+        OpenApiParameter(
+            name="password", location=OpenApiParameter.QUERY, required=True, type=str
+        ),
+        OpenApiParameter(
+            name="first_name", location=OpenApiParameter.QUERY, required=False, type=str
+        ),
+        OpenApiParameter(
+            name="last_name", location=OpenApiParameter.QUERY, required=False, type=str
+        ),
+    ],
+    responses={
+        201: OpenApiResponse(
+            response=dict,
+            description="Successful registration",
+            examples=[
+                OpenApiExample(
+                    "Response example",
+                    description="User registration response example",
+                    value={
+                        "Status": True,
+                        "Task_id": "celery_task.id",
+                        "Token": "token.key",
+                    },
+                    status_codes=[str(status.HTTP_201_CREATED)],
+                ),
+            ],
+        )
+    },
 )
 class RegisterAccount(APIView):
     """
@@ -86,9 +121,10 @@ class RegisterAccount(APIView):
                     return JsonResponse(
                         {
                             "Status": True,
-                            "task_id": send_mail[0][1]["task_id"],
-                            "token": token.key,
-                        }
+                            "Task_id": send_mail[0][1]["task_id"],
+                            "Token": token.key,
+                        },
+                        status=201,
                     )
                 else:
                     return JsonResponse(
@@ -101,8 +137,21 @@ class RegisterAccount(APIView):
 
 
 @extend_schema(
-    request=UserSerializer,
-    responses={201: UserSerializer},
+    tags=["user/"],
+    summary="Confirm email",
+    parameters=[
+        OpenApiParameter(
+            name="email", location=OpenApiParameter.QUERY, required=True, type=str
+        ),
+        OpenApiParameter(
+            name="token", location=OpenApiParameter.QUERY, required=True, type=str
+        ),
+    ],
+    responses={
+        204: OpenApiResponse(
+            description="Successful confirmation",
+        )
+    },
 )
 class ConfirmAccount(APIView):
     """
@@ -124,7 +173,7 @@ class ConfirmAccount(APIView):
                 token.user.is_active = True
                 token.user.save()
                 token.delete()
-                return JsonResponse({"Status": True})
+                return Response(status=204)
             else:
                 return JsonResponse(
                     {"Status": False, "Errors": "Неправильно указан токен или email"}
@@ -136,8 +185,34 @@ class ConfirmAccount(APIView):
 
 
 @extend_schema(
-    request=UserSerializer,
-    responses={201: UserSerializer},
+    tags=["user/"],
+    summary="User login",
+    parameters=[
+        OpenApiParameter(
+            name="email", location=OpenApiParameter.QUERY, required=True, type=str
+        ),
+        OpenApiParameter(
+            name="password", location=OpenApiParameter.QUERY, required=True, type=str
+        ),
+    ],
+    responses={
+        202: OpenApiResponse(
+            response=dict,
+            description="Successful login",
+            examples=[
+                OpenApiExample(
+                    "Response example",
+                    description="User login response example",
+                    value={
+                        "Status": True,
+                        "Task_id": "celery_task.id",
+                        "Token": "token.key",
+                    },
+                    status_codes=[str(status.HTTP_202_ACCEPTED)],
+                ),
+            ],
+        )
+    },
 )
 class LoginAccount(APIView):
     """
@@ -170,8 +245,9 @@ class LoginAccount(APIView):
                         {
                             "Status": True,
                             "Token": token.key,
-                            "task_id": send_mail[0][1]["task_id"],
-                        }
+                            "Task_id": send_mail[0][1]["task_id"],
+                        },
+                        status=202,
                     )
                 else:
                     JsonResponse(
@@ -191,8 +267,18 @@ class LoginAccount(APIView):
 
 
 @extend_schema(
-    request=UserSerializer,
-    responses={201: UserSerializer},
+    tags=["user/"],
+    summary="User logout",
+    parameters=[
+        OpenApiParameter(
+            name="token", location=OpenApiParameter.HEADER, required=True, type=str
+        ),
+    ],
+    responses={
+        204: OpenApiResponse(
+            description="Successful logout",
+        )
+    },
 )
 class LogoutAccount(APIView):
     """
@@ -211,9 +297,24 @@ class LogoutAccount(APIView):
         logout(request)
         cache_clear()
 
-        return JsonResponse({"Status": True})
+        return Response(status=204)
 
 
+# delete account
+@extend_schema(
+    tags=["user/"],
+    summary="User delete",
+    parameters=[
+        OpenApiParameter(
+            name="token", location=OpenApiParameter.HEADER, required=True, type=str
+        ),
+    ],
+    responses={
+        204: OpenApiResponse(
+            description="Successful user delete",
+        )
+    },
+)
 class DeleteAccount(APIView):
     """
     Класс для удаления пользователей
@@ -224,25 +325,38 @@ class DeleteAccount(APIView):
 
         if not request.user.is_authenticated:
             return JsonResponse(
-                {"Status": False, "Error": "Log in required"}, status=403
+                {"Status": False, "Error": "Log in required"},
+                status=403,
             )
 
         request.user.delete()
         cache_clear()
 
-        return JsonResponse({"Status": True})
+        return Response(status=204)
 
 
-@extend_schema(
-    request=UserSerializer,
-    responses={201: UserSerializer},
-)
+# user details
 class UserDetails(APIView):
     """
     Класс для работы с данными пользователя
     """
 
     # Получение данных методом GET
+    @extend_schema(
+        tags=["user/"],
+        summary="User details get",
+        parameters=[
+            OpenApiParameter(
+                name="token", location=OpenApiParameter.HEADER, required=True, type=str
+            ),
+        ],
+        responses={
+            200: OpenApiResponse(
+                response=UserSerializer,
+                description="Successful user details get",
+            )
+        },
+    )
     def get(self, request, *args, **kwargs):
         if not request.user.is_authenticated:
             return JsonResponse(
@@ -253,6 +367,50 @@ class UserDetails(APIView):
         return Response(serializer.data)
 
     # Редактирование методом POST
+    @extend_schema(
+        tags=["user/"],
+        summary="User details post",
+        parameters=[
+            OpenApiParameter(
+                name="token", location=OpenApiParameter.HEADER, required=True, type=str
+            ),
+            OpenApiParameter(
+                name="password",
+                location=OpenApiParameter.QUERY,
+                required=False,
+                type=str,
+            ),
+            OpenApiParameter(
+                name="first_name",
+                location=OpenApiParameter.QUERY,
+                required=False,
+                type=str,
+            ),
+            OpenApiParameter(
+                name="last_name",
+                location=OpenApiParameter.QUERY,
+                required=False,
+                type=str,
+            ),
+        ],
+        responses={
+            202: OpenApiResponse(
+                response=dict,
+                description="Successful details change",
+                examples=[
+                    OpenApiExample(
+                        "Response example",
+                        description="User change details response example. Changed details will send to the email.",
+                        value={
+                            "Status": True,
+                            "Task_id": "celery_task.id",
+                        },
+                        status_codes=[str(status.HTTP_202_ACCEPTED)],
+                    ),
+                ],
+            )
+        },
+    )
     def post(self, request, *args, **kwargs):
         if not request.user.is_authenticated:
             return JsonResponse(
@@ -289,7 +447,59 @@ class UserDetails(APIView):
                 {
                     "Status": True,
                     "task_id": send_mail[0][1]["task_id"],
-                }
+                },
+                status=202,
             )
         else:
             return JsonResponse({"Status": False, "Errors": user_serializer.errors})
+
+
+# Celery status
+@extend_schema(
+    tags=["celery_status/"],
+    summary="Celery status get",
+    parameters=[
+        OpenApiParameter(
+            name="task_id", location=OpenApiParameter.QUERY, required=True, type=str
+        ),
+    ],
+    responses={
+        200: OpenApiResponse(
+            response=dict,
+            description="Successful celery status get",
+            examples=[
+                OpenApiExample(
+                    "Response example",
+                    description="Celery status get response example",
+                    value={
+                        "Status": "PENDING, STARTED, SUCCESS, FAILURE, RETRY, REVOKED",
+                        "Result": True,
+                    },
+                    status_codes=[str(status.HTTP_200_OK)],
+                )
+            ],
+        )
+    },
+)
+class CeleryStatus(APIView):
+    """
+    Класс для получения статуса отлооженных задач в Celery
+    """
+
+    # Получение сатуса задач Celery методом GET
+    permission_classes = [AllowAny]
+
+    def get(self, request, *args, **kwargs):
+        task_id = request.query_params.get("task_id")
+        if task_id:
+            try:
+                task = AsyncResult(task_id)
+                task_status = task.status
+                task_result = task.ready()
+                return JsonResponse(
+                    {"Status": task_status, "Result": task_result}, status=200
+                )
+            except Exception as err:
+                return err
+
+        return JsonResponse({"Status": False, "Error": "Task_id required"}, status=400)

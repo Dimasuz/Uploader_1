@@ -7,6 +7,7 @@ from authlib.integrations.django_client import OAuth
 from django.conf import settings
 from django.shortcuts import redirect, render
 from django.urls import reverse
+from drf_spectacular.utils import extend_schema
 
 oauth = OAuth()
 
@@ -125,6 +126,9 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
 
 
+@extend_schema(
+    tags=["auth0/"],
+)
 @api_view(["GET"])
 @permission_classes([AllowAny])
 def public(request):
@@ -135,6 +139,9 @@ def public(request):
     )
 
 
+@extend_schema(
+    tags=["auth0/"],
+)
 @api_view(["GET"])
 def private(request):
     return JsonResponse(
@@ -144,6 +151,9 @@ def private(request):
     )
 
 
+@extend_schema(
+    tags=["auth0/"],
+)
 @api_view(["GET"])
 @requires_scope("read:messages")
 def private_scoped(request):

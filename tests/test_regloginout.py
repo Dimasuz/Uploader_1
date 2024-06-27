@@ -24,15 +24,14 @@ def test_user_register(register_user):
     assert user
     assert confirm_token
     assert response.json()["Status"] == True
-    assert response.json()["task_id"]
+    assert response.json()["Task_id"]
 
 
 # check /api/v1/user/register/confirm
 def test_register_confirm(register_confirm):
     api_client, _, _, response = register_confirm
 
-    assert response.json()["Status"] == True
-    assert response.status_code == 200
+    assert response.status_code == 204
 
 
 # check /api/v1/user/login
@@ -50,7 +49,7 @@ def test_user_login(register_confirm):
         url,
         data=data,
     )
-    assert response.status_code == 200
+    assert response.status_code == 202
     assert response.json()["Token"] == Token.objects.get(user=user).key
 
 
@@ -69,8 +68,7 @@ def test_user_logout(login):
     except Token.DoesNotExist as e:
         token = str(e)
 
-    assert response.status_code == 200
-    assert response.json()["Status"] == True
+    assert response.status_code == 204
     assert token == "Token matching query does not exist."
 
 
@@ -89,8 +87,7 @@ def test_user_delete(login):
     except User.DoesNotExist as e:
         user = str(e)
 
-    assert response.status_code == 200
-    assert response.json()["Status"] == True
+    assert response.status_code == 204
     assert user == "User matching query does not exist."
 
 
@@ -136,7 +133,7 @@ def test_user_details_post(login):
         headers=headers,
         data=data,
     )
-    assert response.status_code == 200
+    assert response.status_code == 202
     assert response.json()["Status"] == True
 
     # проверяем изменения
@@ -159,7 +156,7 @@ def test_user_details_post(login):
         data=data,
     )
     token = response.json()["Token"]
-    assert response.status_code == 200
+    assert response.status_code == 202
     assert response.json()["Status"] == True
 
     # проверяем новые данные пользователя
@@ -234,7 +231,7 @@ def test_user_password_reset_confirm(login):
         url,
         data=data,
     )
-    assert response.status_code == 200
+    assert response.status_code == 202
     assert response.json()["Token"] == Token.objects.get(user=user).key
 
 
