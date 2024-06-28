@@ -9,6 +9,9 @@ from drf_spectacular.views import (SpectacularAPIView, SpectacularRedocView,
 from regloginout.views import CeleryStatus, index
 from uploader_1.settings import API_VERTION
 
+from graphene_django.views import GraphQLView
+from . import schema
+
 api_vertion = API_VERTION
 
 urlpatterns = [
@@ -38,11 +41,13 @@ urlpatterns = [
     path(
         "api/schema/docs/",
         SpectacularSwaggerView.as_view(url_name="schema"),
-        name="docs",
-    ),
+        name="docs",),
+
     path(
         "api/schema/redoc/",
         SpectacularRedocView.as_view(url_name="schema"),
         name="redoc",
     ),
+    # graphene. Given that schema path is defined in GRAPHENE['SCHEMA'] in your settings.py
+    path(f"api/{api_vertion}/graphql/", GraphQLView.as_view(graphiql=True)),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

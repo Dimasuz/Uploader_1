@@ -187,7 +187,7 @@ def test_processing_file(login, tmp_file):
     upload_file = UploadFileMongo.objects.get(pk=file_id)
     upload_file.delete()
 
-    assert response.status_code == 201
+    assert response.status_code == 202
     assert response.json()["Status"]
     assert response.json()["Task_id"]
 

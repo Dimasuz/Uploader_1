@@ -73,6 +73,8 @@ INSTALLED_APPS = [
     # for Auth0 settings
     "app_auth0",
     "social_django",
+    #for graphene
+    "graphene_django",
 ]
 
 MIDDLEWARE = [
@@ -402,4 +404,8 @@ CACHES = {
         "VERSION": 9,
         "TIMEOUT": 10,
     }
+}
+
+GRAPHENE = {
+    'SCHEMA': 'uploader_1.schema.schema'
 }
