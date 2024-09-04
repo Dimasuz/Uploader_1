@@ -7,7 +7,7 @@ from tempfile import NamedTemporaryFile
 
 import requests
 
-TOKEN = "1988486fcc5926a1cd9ca47b14e89b8793ec2c5a"
+TOKEN = "548150e57126503622acd83760d79b54bc29d58f"
 
 # url_adress = "0:0:0:0"
 url_adress = "127.0.0.1"

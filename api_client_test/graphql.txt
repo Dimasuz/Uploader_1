@@ -1,0 +1,64 @@
+
+Query:
+
+query { users {
+    email
+    first_name
+    last_name
+    }
+}
+
+query {
+	user_1: user(email: "1@mail.ru") {
+        email
+        first_name
+        last_name
+    }
+	user_2: user(email: "2@mail.ru") {
+        email
+        first_name
+        last_name
+	}
+    user_3: user(email: "111@mail.ru") {
+        email
+        first_name
+        last_name
+	}
+}
+
+query GetUser($token_1: String!) {
+	user_1: user(token: $token_1) {
+	    id
+        email
+        first_name
+        last_name
+    }
+}
+{"token_1": "548150e57126503622acd83760d79b54bc29d58f"}
+
+
+Mutations:
+
+mutation TokenMutation($token: String!, $input: UpdateUserInput!) {
+    user_update(token: $token, input: $input) {
+        ok
+        errors
+        query {
+            user(token: $token) {
+          		id
+                email
+                first_name
+                last_name
+            }
+        }
+    }
+}
+{"token": ""91260b47d21d4ca044d80d5271fcc7efc7684395"",
+	"input": {
+    "email": "1@mail.ru",
+    "first_name": "new_first_name_1",
+    "last_name": "new_last_name"
+	}
+}
+
+

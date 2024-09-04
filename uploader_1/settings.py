@@ -73,7 +73,7 @@ INSTALLED_APPS = [
     # for Auth0 settings
     "app_auth0",
     "social_django",
-    #for graphene
+    # for graphene
     "graphene_django",
 ]
 
@@ -251,6 +251,8 @@ AUTHENTICATION_BACKENDS = [
     "social_core.backends.auth0.Auth0OAuth2",
     # for auth0 api
     "django.contrib.auth.backends.RemoteUserBackend",
+    # for django-graphql-jwt
+    "graphql_jwt.backends.JSONWebTokenBackend",
 ]
 
 # Specifies the login method to use for allauth
@@ -407,5 +409,12 @@ CACHES = {
 }
 
 GRAPHENE = {
-    'SCHEMA': 'uploader_1.schema.schema'
+    "SCHEMA": "uploader_1.schema.schema",
+    "MIDDLEWARE": [
+        "graphql_jwt.middleware.JSONWebTokenMiddleware",
+    ],
 }
+
+# GRAPHQL_JWT = {
+#     "JWT_ALLOW_ARGUMENT": True,
+# }

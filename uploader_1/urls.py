@@ -5,11 +5,11 @@ from django.contrib import admin
 from django.urls import include, path
 from drf_spectacular.views import (SpectacularAPIView, SpectacularRedocView,
                                    SpectacularSwaggerView)
+from graphene_django.views import GraphQLView
 
 from regloginout.views import CeleryStatus, index
 from uploader_1.settings import API_VERTION
 
-from graphene_django.views import GraphQLView
 from . import schema
 
 api_vertion = API_VERTION
@@ -41,8 +41,8 @@ urlpatterns = [
     path(
         "api/schema/docs/",
         SpectacularSwaggerView.as_view(url_name="schema"),
-        name="docs",),
-
+        name="docs",
+    ),
     path(
         "api/schema/redoc/",
         SpectacularRedocView.as_view(url_name="schema"),
