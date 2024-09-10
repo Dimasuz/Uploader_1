@@ -86,11 +86,13 @@ class UserMutation(MutationPayload, graphene.Mutation):
             errors.append("Log in required")
             return cls(status=404, errors=errors)
 
-        # if not info.context.user.is_authenticated:
-        #     errors.append('not_authenticated')
-        #
+        if not info.context.user.is_authenticated:
+            errors.append('not_authenticated')
+            return cls(status=404, errors=errors)
+
         # if user != info.context.user:
         #     errors.append('wrong_user')
+        #     return cls(status=404, errors=errors)
 
         if input.password:
             try:
@@ -100,7 +102,7 @@ class UserMutation(MutationPayload, graphene.Mutation):
                 for item in password_error:
                     error_array.append(item)
                 errors.append(error_array)
-                return cls(status=False, errors=errors)
+                return cls(status=400, errors=errors)
             else:
                 user.password = input.password
 
@@ -117,9 +119,8 @@ class UserMutation(MutationPayload, graphene.Mutation):
             task_id = {"task_id": send_mail[0][1]["task_id"]}
             return cls(user=user, status=202, message=task_id)
         else:
-            msg = user_serializer.errors
-            # перевести в message errors?
-            return cls(status=403, message=msg)
+            errors.append(user_serializer.errors)
+            return cls(status=403, errors=errors)
 
 
 class Mutation(graphene.ObjectType):
