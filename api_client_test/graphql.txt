@@ -62,12 +62,52 @@ mutation TokenMutation($token: String!, $input: UpdateUserInput!) {
 }
 
 
-{'errors':
-    [
-        {'message': "String cannot represent value: ['This password is too short. It must contain at least 8 characters.']",
-        'locations': [{'line': 5, 'column': 13}],
-        'path': ['user_update', 'errors', 0]
-        }
-    ],
-'data': {'user_update': {'status': 0, 'errors': [None], 'query': {'user': {
-'id': '1', 'email': 'email_aa18a57d-cedb-4199-8f10-5a5dcd488c8c@mail.ru', 'first_name': 'first_name_aa18a57d-cedb-4199-8f10-5a5dcd488c8c', 'last_name': 'last_name_aa18a57d-cedb-4199-8f10-5a5dcd488c8c'}}}}}
+mutation CreateMutation($input: UpdateUserInput!) {
+    user_create(input: $input) {
+        status
+        errors
+    }
+}
+
+{"input": {
+    "email": "11@mail.ru",
+    "first_name": "new_first_name_2",
+    "last_name": "new_last_name",
+    "password": "password_new"
+	}
+}
+{
+  "data": {
+    "user_create": {
+      "status": 202,
+      "errors": [],
+      "message": {
+        "task_id": "b32255c2-52f2-4f2d-8599-9f13342164cb"
+      }
+    }
+  }
+}
+
+{
+  "data": {
+    "user_create": {
+      "status": 403,
+      "errors": [
+        "{'email': [ErrorDetail(string='Пользователь with this email address already exists.', code='unique')]}"
+      ],
+      "message": []
+    }
+  }
+}
+
+{
+  "data": {
+    "user_create": {
+      "status": 403,
+      "errors": [
+        "Не указаны все необходимые аргументы"
+      ],
+      "message": []
+    }
+  }
+}

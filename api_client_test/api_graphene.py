@@ -58,6 +58,7 @@ def user_details_get():
     if response.status_code == 200:
         print("response : ", response.json())
 
+
 def user_details_update():
 
     body = """

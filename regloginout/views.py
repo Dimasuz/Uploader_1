@@ -175,9 +175,7 @@ class ConfirmAccount(APIView):
                 token.delete()
                 return Response(status=204)
             else:
-                return JsonResponse(
-                    {"Status": False, "Errors": "Неправильно указан токен или email"}
-                )
+                return JsonResponse({"Status": False, "Errors": "Wrong token or email"})
 
         return JsonResponse(
             {"Status": False, "Errors": "Не указаны все необходимые аргументы"}
