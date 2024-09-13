@@ -33,13 +33,13 @@ class FileUploadAPIView(APIView):
     # Upload file by method POST
     """POST"""
 
-    async def upladed_file_save(self, request):
+    async def uploaded_file_save(self, request):
         file_upload = UploadFile(user=request.data["user"], file=request.FILES["file"])
         await file_upload.asave()
         return file_upload.pk
 
     async def handle_uploaded_file(self, request):
-        task = asyncio.create_task(self.upladed_file_save(request))
+        task = asyncio.create_task(self.uploaded_file_save(request))
         upload_file = await task
         # ограничим время загрузки файла
         stop_time = datetime.now() + timedelta(minutes=int(MAX_TIME_UPLOAD_FILE))

@@ -370,4 +370,4 @@ def test_graphql_celery(register_user):
     assert response.json()["data"]["celery"]["task_result"]
 
 
-# # pytest tests/test_graphene.py
+# # pytest tests/test_regloginout_graphql.py

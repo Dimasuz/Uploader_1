@@ -5,6 +5,7 @@ from datetime import datetime
 
 import pytest
 from django.core.cache import cache
+from graphene_file_upload.django.testing import file_graphql_query
 from model_bakery import baker
 from rest_framework.authtoken.models import Token
 
@@ -132,15 +133,56 @@ def create_token():
     return token.key
 
 
+#  передача параментов в фикчу из функции через parametrize - @pytest.mark.parametrize("tmp_file", ["txt"], indirect=True)
 @pytest.fixture
 def tmp_file(tmp_path, request):
-    file_name = "test_at_" + str(datetime.now())
-    file_ext = request.param
+    time_now = str(datetime.now()).replace(":", "-").replace(" ", "_")
+    file_name = "test_at_" + time_now
+    try:
+        file_ext = request.param
+    except AttributeError:
+        file_ext = "txt"
     file_name = os.path.join(tmp_path, f"{file_name}.{file_ext}")
     with open(file_name, "w+") as file:
         # file.write(io.BytesIO(b"some initial text data"))
         file.write(f"pytest_file path {file_name}")
     return file_name
+
+
+# graphql
+#  передача параментов в фикчу из функции через mark - @pytest.mark.url(url)
+@pytest.fixture
+def file_upload(login, tmp_file, request):
+
+    api_client, _, token = login
+
+    marker = request.node.get_closest_marker("url")
+    db = marker.args[0]
+    url_view = f"file/{db}/graphql/"
+    url = URL_BASE + url_view
+
+    body = f"""
+    mutation testUploadMutation($file: Upload!, $token: String!, $sync: Boolean) {{
+        file_{db}_upload(file: $file, token: $token, sync: $sync) {{
+            errors
+            message
+            status
+        }}
+    }}
+    """
+
+    with open(tmp_file, "rb") as file:
+
+        response = file_graphql_query(
+            body,
+            op_name="testUploadMutation",
+            files={"file": file},
+            variables={"token": token, "sync": True},
+            client=api_client,
+            graphql_url=url,
+        )
+
+    return token, response
 
 
 # for auth0
