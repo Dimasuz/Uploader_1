@@ -1,5 +1,7 @@
 import asyncio
 import os.path
+import secrets
+import string
 from contextlib import suppress
 from datetime import datetime, timedelta
 
@@ -94,6 +96,11 @@ class FileUploadAPIView(APIView):
                 status=400,
             )
         request.data["user"] = request.user.pk
+        request.data["file_name"] = request.FILES['file'].name
+        _, file_extension = os.path.splitext(request.FILES['file'].name)
+        file_name = ''.join(secrets.choice(string.digits) for i in range(20))
+        request.FILES['file'].name = file_name + file_extension
+
         serializer = self.serializer_classe(data=request.data)
         if serializer.is_valid():
             if request.data.get("sync_mode", False):

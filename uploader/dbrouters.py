@@ -8,7 +8,6 @@ class UploaderRouter:
     """
 
     route_app_labels = {"uploader"}
-    # db_uploader = settings.DATABASES['db_uploader']
 
     def db_for_read(self, model, **hints):
         """

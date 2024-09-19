@@ -8,6 +8,7 @@ class UploadFileSerializer(serializers.ModelSerializer):
         model = UploadFile
         fields = (
             "file",
+            "file_name",
             "uploaded_on",
             "user",
         )

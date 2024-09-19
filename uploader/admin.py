@@ -11,4 +11,5 @@ class UploadFileAdmin(admin.ModelAdmin):
         "file",
         "user",
         "uploaded_on",
+        "file_name",
     )

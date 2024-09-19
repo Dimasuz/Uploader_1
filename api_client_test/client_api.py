@@ -8,7 +8,7 @@ from tempfile import NamedTemporaryFile
 import requests
 
 # TOKEN = "5a9da05f4a2443a4527cc5822a085552ddce0e52"
-TOKEN = "0e8088707c3aa81e7918908aa01cb24ae7f1af9b"
+TOKEN = "211dad60e1ce7f1752a03a4e60cfa148f064560a"
 
 # url_adress = "0:0:0:0"
 url_adress = "127.0.0.1"
@@ -19,8 +19,8 @@ url_base = f"http://{url_adress}:{url_port}/{api_version}/"
 
 # url_base = 'http://0.0.0.0:8000/api/v1/auth0/'
 
-# add_url_file_view = ""
-add_url_file_view = "mongo/"
+add_url_file_view = ""
+# add_url_file_view = "mongo/"
 
 
 time_now = str(datetime.now())[11:20]

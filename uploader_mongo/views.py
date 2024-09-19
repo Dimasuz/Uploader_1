@@ -33,34 +33,6 @@ class FileUploadMongoAPIView(APIView):
 
     # Upload file by method POST
     """POST"""
-
-    async def uploaded_file_save(self, request):
-        file = request.FILES["file"]
-        file_upload = UploadFileMongo(
-            user=request.user.pk,
-        )
-        file_upload.file.put(
-            file.file,
-            content_type=file.content_type,
-            filename=file.name,
-        )
-
-        await sync_to_async(file_upload.asave(), thread_sensitive=False)
-        return str(file_upload.id)
-
-    async def handle_uploaded_file(self, request):
-        task = asyncio.create_task(self.uploaded_file_save(request))
-        upload_file = await task
-        # ограничим время загрузки файла
-        stop_time = datetime.now() + timedelta(minutes=int(MAX_TIME_UPLOAD_FILE))
-        while datetime.now() < stop_time:
-            if task.done():
-                return {"Status": True, "File_id": upload_file}
-            else:
-                await asyncio.sleep(1)
-        task.cancel()
-        return {"Status": False, "Error": "UPLOAD_TIMED_OUT"}
-
     @extend_schema(
         summary="File upload",
         parameters=[
@@ -102,29 +74,18 @@ class FileUploadMongoAPIView(APIView):
                 status=400,
             )
 
-        if request.data.get("sync_mode", False):
-            file_upload = UploadFileMongo(
-                user=request.user.pk,
-            )
-            file_upload.file.put(
-                file.file,
-                content_type=file.content_type,
-                filename=file.name,
-            )
-            file_upload.save()
-            return JsonResponse(
-                {"Status": True, "File_id": str(file_upload.id)}, status=201
-            )
-        else:
-            # async upload
-            uploaded_file = asyncio.run(self.handle_uploaded_file(request))
-            if uploaded_file["Status"]:
-                return JsonResponse(
-                    uploaded_file,
-                    status=201,
-                )
-            else:
-                return JsonResponse(uploaded_file, status=400)
+        file_upload = UploadFileMongo(
+            user=request.user.pk,
+        )
+        file_upload.file.put(
+            file.file,
+            content_type=file.content_type,
+            filename=file.name,
+        )
+        file_upload.save()
+        return JsonResponse(
+            {"Status": True, "File_id": str(file_upload.id)}, status=201
+        )
 
     def check_user_file_id(self, request, *args, **kwargs):
 
@@ -153,7 +114,6 @@ class FileUploadMongoAPIView(APIView):
                     },
                     status=404,
                 )
-
         else:
             return JsonResponse(
                 {"Status": False, "Error": "file_id is required"}, status=400

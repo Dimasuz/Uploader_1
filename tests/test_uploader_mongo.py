@@ -26,7 +26,6 @@ def test_upload(login, tmp_file):
     with open(tmp_file, "rb") as file:
         data = {
             "file": file,
-            "sync_mode": True,
         }
         response = api_client.post(
             url,
@@ -63,7 +62,6 @@ def test_upload_not_authorization(login, tmp_file):
     with open(tmp_file) as file:
         data = {
             "file": file,
-            "sync_mode": True,
         }
         response = api_client.post(
             url,
@@ -85,7 +83,6 @@ def test_download(login, tmp_file):
     with open(tmp_file, "rb") as file_upload:
         data = {
             "file": file_upload,
-            "sync_mode": True,
         }
         response = api_client.post(
             url,
@@ -126,7 +123,6 @@ def test_download_wrong_user(login, tmp_file, create_token):
     with open(tmp_file, "rb") as file_upload:
         data = {
             "file": file_upload,
-            "sync_mode": True,
         }
         response = api_client.post(
             url,
@@ -166,7 +162,7 @@ def test_processing_file(login, tmp_file):
         "Authorization": f"Token {token}",
     }
     with open(tmp_file, "rb") as file_upload:
-        data = {"file": file_upload, "sync_mode": True}
+        data = {"file": file_upload,}
         response = api_client.post(
             url,
             headers=headers,
@@ -201,7 +197,7 @@ def test_delete_file(login, tmp_file):
         "Authorization": f"Token {token}",
     }
     with open(tmp_file, "rb") as file_upload:
-        data = {"file": file_upload, "sync_mode": True}
+        data = {"file": file_upload,}
         response = api_client.post(
             url,
             headers=headers,
