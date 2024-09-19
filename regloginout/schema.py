@@ -36,8 +36,8 @@ class Query(graphene.ObjectType):
     users = graphene.List(UserModelType)
     celery = graphene.Field(CeleryType, task_id=graphene.String(required=True))
 
-    def resolve_users(self, info, **kwargs):
-        return User.objects.all()
+    # def resolve_users(self, info, **kwargs):
+    #     return User.objects.all()
 
     def resolve_celery(self, info, task_id):
         try:
@@ -60,7 +60,7 @@ class ObjectField(Scalar):  # to serialize error message from serializer
         return data
 
 
-class MutationPayload(graphene.ObjectType):
+class ObjectPayload(graphene.ObjectType):
     status = graphene.Int(required=True)
     errors = graphene.List(graphene.String, required=True)
     message = ObjectField()
@@ -86,7 +86,7 @@ class UserInput(graphene.InputObjectType):
     password = graphene.String(required=False)
 
 
-class UserMutation(MutationPayload, graphene.Mutation):
+class UserMutation(ObjectPayload, graphene.Mutation):
     class Arguments:
         input = UserInput(required=True)
         token = graphene.String(required=True)
@@ -140,7 +140,7 @@ class UserMutation(MutationPayload, graphene.Mutation):
             return cls(status=403, errors=errors)
 
 
-class UserCreate(MutationPayload, graphene.Mutation):
+class UserCreate(ObjectPayload, graphene.Mutation):
     class Arguments:
         input = UserInput(required=True)
 
@@ -191,7 +191,7 @@ class UserCreate(MutationPayload, graphene.Mutation):
             return cls(status=403, errors=errors)
 
 
-class UserConfirm(MutationPayload, graphene.Mutation):
+class UserConfirm(ObjectPayload, graphene.Mutation):
     class Arguments:
         input = UserInput(required=True)
         token = graphene.String(required=True)
@@ -223,7 +223,7 @@ class UserConfirm(MutationPayload, graphene.Mutation):
             return cls(status=404, errors=errors)
 
 
-class UserLogin(MutationPayload, graphene.Mutation):
+class UserLogin(ObjectPayload, graphene.Mutation):
     class Arguments:
         input = UserInput(required=True)
 
@@ -267,7 +267,7 @@ class UserLogin(MutationPayload, graphene.Mutation):
             return cls(status=403, errors=errors)
 
 
-class UserLogout(MutationPayload, graphene.Mutation):
+class UserLogout(ObjectPayload, graphene.Mutation):
     class Arguments:
         token = graphene.String(required=True)
 
@@ -299,7 +299,7 @@ class UserLogout(MutationPayload, graphene.Mutation):
         return cls(status=204)
 
 
-class UserDelete(MutationPayload, graphene.Mutation):
+class UserDelete(ObjectPayload, graphene.Mutation):
     class Arguments:
         token = graphene.String(required=True)
 

@@ -3,12 +3,15 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path
-from drf_spectacular.views import (SpectacularAPIView, SpectacularRedocView,
-                                   SpectacularSwaggerView)
+from drf_spectacular.views import (
+    SpectacularAPIView,
+    SpectacularRedocView,
+    SpectacularSwaggerView,
+)
 from graphene_django.views import GraphQLView
 
 from regloginout.views import CeleryStatus, index
-from uploader_1.settings import API_VERTION
+from uploader_1.settings import API_VERTION, MEDIA_ROOT, MEDIA_URL
 
 from . import schema
 
@@ -50,4 +53,4 @@ urlpatterns = [
     ),
     # graphene. Given that schema path is defined in GRAPHENE['SCHEMA'] in your settings.py
     path(f"api/{api_vertion}/graphql/", GraphQLView.as_view(graphiql=True)),
-] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+] + static(MEDIA_URL, document_root=MEDIA_ROOT)

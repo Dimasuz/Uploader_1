@@ -5,8 +5,12 @@ from django.contrib.auth.password_validation import validate_password
 from django.core.cache import cache
 from django.http import JsonResponse
 from django.shortcuts import render
-from drf_spectacular.utils import (OpenApiExample, OpenApiParameter,
-                                   OpenApiResponse, extend_schema)
+from drf_spectacular.utils import (
+    OpenApiExample,
+    OpenApiParameter,
+    OpenApiResponse,
+    extend_schema,
+)
 from rest_framework import status
 from rest_framework.authtoken.models import Token
 from rest_framework.permissions import AllowAny

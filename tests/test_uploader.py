@@ -18,7 +18,7 @@ url = URL_BASE + url_view
 # upload
 # @pytest.mark.parametrize("tmp_file", ["txt", "exe"], indirect=True)
 @pytest.mark.parametrize("tmp_file", ["txt"], indirect=True)
-def test_upload(login, tmp_file):
+def test_upload_sync(login, tmp_file):
     """POST"""
     api_client, user, token = login
     headers = {
@@ -28,6 +28,38 @@ def test_upload(login, tmp_file):
         data = {
             "file": file,
             "sync_mode": True,
+        }
+        response = api_client.post(
+            url,
+            headers=headers,
+            data=data,
+        )
+    file_id = response.json()["File_id"]
+    uploaded_file = UploadFile.objects.all().filter(pk=file_id)[0]
+    file_path = uploaded_file.file.path
+
+    assert response.status_code == 201
+    assert response.json()["Status"] == True
+    assert type(response.json()["File_id"]) == int
+    assert uploaded_file.file
+
+    # clear disk
+    os.remove(file_path)
+
+
+# upload
+# @pytest.mark.parametrize("tmp_file", ["txt", "exe"], indirect=True)
+@pytest.mark.parametrize("tmp_file", ["txt"], indirect=True)
+def test_upload_async(login, tmp_file):
+    """POST"""
+    api_client, user, token = login
+    headers = {
+        "Authorization": f"Token {token}",
+    }
+    with open(tmp_file, "rb") as file:
+        data = {
+            "file": file,
+            # "sync_mode": False,
         }
         response = api_client.post(
             url,

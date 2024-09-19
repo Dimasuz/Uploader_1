@@ -1,7 +1,14 @@
 from django.urls import path
 
-from app_auth0.views import (callback, index, login, logout, private,
-                             private_scoped, public)
+from app_auth0.views import (
+    callback,
+    index,
+    login,
+    logout,
+    private,
+    private_scoped,
+    public,
+)
 
 app_name = "app_auth0"
 

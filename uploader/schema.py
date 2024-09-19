@@ -8,9 +8,10 @@ from celery.result import AsyncResult
 from django.core.exceptions import ObjectDoesNotExist
 from graphene_file_upload.scalars import Upload
 from graphql_jwt.decorators import login_required
+from pyexpat.errors import messages
 
 from regloginout.models import User
-from regloginout.schema import CeleryType, MutationPayload, UserModelType
+from regloginout.schema import CeleryType, ObjectPayload, UserModelType
 from uploader.models import UploadFile
 from uploader_1.settings import MAX_TIME_UPLOAD_FILE
 from uploader_1.tasks import processing_file
@@ -36,7 +37,7 @@ def check_user_file_id(token, file_id, *args, **kwargs):
         }
 
     try:
-        file = UploadFile.objects.get(pk=file_id)
+        file = UploadFile.objects.get(id=file_id)
     except ObjectDoesNotExist:
         errors.append("File not found.")
         return {
@@ -63,17 +64,28 @@ def check_user_file_id(token, file_id, *args, **kwargs):
     return file
 
 
-class Query(graphene.ObjectType):
-    celery = graphene.Field(CeleryType, task_id=graphene.String(required=True))
+class FilePathType(graphene.ObjectType):
+    file_path = graphene.String()
 
-    def resolve_celery(self, info, task_id):
-        try:
-            task = AsyncResult(task_id)
-            task_status = task.status
-            task_result = task.ready()
-            return CeleryType(task_status=task_status, task_result=task_result)
-        except Exception as err:
-            return err
+
+class Query(graphene.ObjectType):
+    file_download = graphene.Field(
+        ObjectPayload,
+        file_id=graphene.Int(required=True),
+        token=graphene.String(required=True),
+    )
+
+    def resolve_file_download(self, info, token, file_id):
+        download_file = check_user_file_id(token, file_id)
+
+        if not isinstance(download_file, UploadFile):
+            return ObjectPayload(
+                message=download_file["status"], errors=download_file["errors"]
+            )
+
+        message = {"file_url": download_file.file.url}
+
+        return ObjectPayload(message=message)
 
 
 # Mutetions
@@ -97,7 +109,7 @@ async def handle_uploaded_file(file, user):
     return {"result": False, "error": "UPLOAD_TIMED_OUT"}
 
 
-class UploadFileMutation(MutationPayload, graphene.Mutation):
+class UploadFileMutation(ObjectPayload, graphene.Mutation):
     class Arguments:
         file = Upload(required=True)
         token = graphene.String(required=True)
@@ -133,7 +145,7 @@ class UploadFileMutation(MutationPayload, graphene.Mutation):
             return UploadFileMutation(errors=errors, status=404)
 
 
-class DeleteFileMutation(MutationPayload, graphene.Mutation):
+class DeleteFileMutation(ObjectPayload, graphene.Mutation):
     class Arguments:
         file_id = graphene.Int(required=True)
         token = graphene.String(required=True)
@@ -159,7 +171,7 @@ class DeleteFileMutation(MutationPayload, graphene.Mutation):
         return DeleteFileMutation(message=message, status=200)
 
 
-class ChangeFileMutation(MutationPayload, graphene.Mutation):
+class ChangeFileMutation(ObjectPayload, graphene.Mutation):
     class Arguments:
         file_id = graphene.Int(required=True)
         token = graphene.String(required=True)

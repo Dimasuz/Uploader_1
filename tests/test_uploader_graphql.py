@@ -2,6 +2,7 @@ import os
 import warnings
 
 import pytest
+from authlib.common.urls import quote_url
 from django.core.exceptions import ObjectDoesNotExist
 from graphene_file_upload.django.testing import file_graphql_query
 
@@ -14,7 +15,7 @@ warnings.filterwarnings(action="ignore")
 pytestmark = pytest.mark.django_db
 
 db = "db"
-url_view = f"file/{db}/graphql/"
+url_view = f"graphql/{db}/"
 url = URL_BASE + url_view
 
 
@@ -101,7 +102,7 @@ def test_delete(api_client, file_upload):
     assert not file
 
 
-# file/mongo/ PUT
+# file change
 @pytest.mark.url(db)
 def test_processing_file(file_upload, api_client):
     # prepare file
@@ -130,7 +131,155 @@ def test_processing_file(file_upload, api_client):
     assert response.json()["data"]["file_db_change"]["message"]["task_id"]
 
     uploaded_file = UploadFile.objects.get(pk=file_id)
+    file_path = uploaded_file.file.path
     uploaded_file.delete()
+    # clear disk
+    os.remove(file_path)
+
+
+# download
+@pytest.mark.url(db)
+def test_download_file(file_upload, api_client):
+    # prepare file
+    token, response = file_upload
+    file_id = response.json()["data"][f"file_db_upload"]["message"]["file_id"]
+    downloaded_file = UploadFile.objects.get(pk=file_id)
+    file_url = downloaded_file.file.url
+
+    # download
+    url_view = "graphql/"
+    url = URL_BASE + url_view
+    body = """
+           query testDownloadQuery($file_id: Int!, $token: String!) {
+               file_download(file_id: $file_id, token: $token) {
+                   message    			                   
+               }
+           }
+           """
+
+    response = api_client.post(
+        url,
+        data={"query": body, "variables": {"token": token, "file_id": file_id}},
+        format="json",
+    )
+    print(response.json())
+    query_url = response.json()["data"]["file_download"]["message"]["file_url"]
+    assert response.status_code == 200
+    assert query_url == file_url
+
+    file_path = downloaded_file.file.path
+    downloaded_file.delete()
+    # clear disk
+    os.remove(file_path)
+
+
+# download not auth user
+@pytest.mark.url(db)
+def test_download_file_noauthuser(api_client):
+    # prepare file
+    # no need to prepare file
+
+    # download not autherisation user
+    url_view = "graphql/"
+    url = URL_BASE + url_view
+    body = """
+           query testDownloadQuery($file_id: Int!, $token: String!) {
+               file_download(file_id: $file_id, token: $token) {
+                   message    		
+                   errors	                   
+               }
+           }
+           """
+
+    response = api_client.post(
+        url,
+        data={"query": body, "variables": {"token": "1", "file_id": 1}},
+        format="json",
+    )
+
+    assert response.status_code == 200
+    assert response.json()["data"]["file_download"]["message"] == 404
+    assert response.json()["data"]["file_download"]["errors"][0] == "Log in required"
+
+
+# download wrong user
+@pytest.mark.url(db)
+def test_download_file_wrong_user(file_upload, create_token, api_client):
+    # prepare file
+    token, response = file_upload
+    file_id = response.json()["data"][f"file_db_upload"]["message"]["file_id"]
+    downloaded_file = UploadFile.objects.get(pk=file_id)
+
+    token_wrong_user = create_token
+
+    # download
+    url_view = "graphql/"
+    url = URL_BASE + url_view
+    body = """
+           query testDownloadQuery($file_id: Int!, $token: String!) {
+               file_download(file_id: $file_id, token: $token) {
+                   message    
+                   errors			                   
+               }
+           }
+           """
+
+    response = api_client.post(
+        url,
+        data={
+            "query": body,
+            "variables": {"token": token_wrong_user, "file_id": file_id},
+        },
+        format="json",
+    )
+
+    assert response.status_code == 200
+    assert response.json()["data"]["file_download"]["message"] == 404
+    assert (
+        response.json()["data"]["file_download"]["errors"][0]
+        == "You try to get not yours file."
+    )
+
+    file_path = downloaded_file.file.path
+    downloaded_file.delete()
+    # clear disk
+    os.remove(file_path)
+
+
+# download wrong file_id
+@pytest.mark.url(db)
+def test_download_file_wrong_user(file_upload, create_token, api_client):
+    # prepare file
+    token, response = file_upload
+    file_id = response.json()["data"][f"file_db_upload"]["message"]["file_id"]
+    downloaded_file = UploadFile.objects.get(pk=file_id)
+
+    # download
+    url_view = "graphql/"
+    url = URL_BASE + url_view
+    body = """
+           query testDownloadQuery($file_id: Int!, $token: String!) {
+               file_download(file_id: $file_id, token: $token) {
+                   message    
+                   errors			                   
+               }
+           }
+           """
+
+    response = api_client.post(
+        url,
+        data={"query": body, "variables": {"token": token, "file_id": file_id + 1}},
+        format="json",
+    )
+
+    assert response.status_code == 200
+    assert response.json()["data"]["file_download"]["message"] == 404
+    assert response.json()["data"]["file_download"]["errors"][0] == "File not found."
+
+    file_path = downloaded_file.file.path
+    downloaded_file.delete()
+    # clear disk
+    os.remove(file_path)
 
 
 # pytest tests/test_uploader_graphql.py

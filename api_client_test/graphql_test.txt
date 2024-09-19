@@ -1,0 +1,80 @@
+
+query GetUser($token_1: String!) {
+		user_1: user(token: $token_1) {
+	    	id
+        email
+        first_name
+        last_name
+    }
+}
+
+query GetUsers
+{ users {
+    email
+    first_name
+    last_name
+    }
+}
+
+query GetCelery($task_id: String!) {
+		celery_1: celery(task_id: $task_id) {
+	    	task_status
+    		task_result
+    }
+}
+
+
+mutation TokenMutation($token_1: String!, $input: UpdateUserInput!) {
+    user_update(token: $token_1, input: $input) {
+        status
+        errors
+        query {
+            user(token: $token_1) {
+          		id
+                email
+                first_name
+                last_name
+            }
+        }
+    }
+}
+
+mutation CreateMutation($input: UpdateUserInput!) {
+    user_create(input: $input) {
+        status
+        errors
+    		message
+        # query {
+        #     user(token: $token_1) {
+        #   		id
+        #         email
+        #         first_name
+        #         last_name
+        #     }
+        # }
+    }
+}
+
+
+{"token_1": "2dbb48e5c37668424ccd08e62be072e9b7c22ed2",
+	"input": {
+    "email": "111@mail.ru",
+    "first_name": "new_first_name_2",
+    "password": "password_new"
+  },
+"task_id": "111"
+}
+
+
+{'File_id': '66e988a6da738ddfc2fb13cf', 'Status': True}
+
+
+ query GetFile($token: String!, $file_id: String!) {
+     file_download_mongo(token: $token, file_id: $file_id) {
+         message
+         errors
+     }
+}
+
+{"token": "0e8088707c3aa81e7918908aa01cb24ae7f1af9b", "file_id": "66e988a6da738ddfc2fb13cf"}
+

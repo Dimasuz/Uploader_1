@@ -10,5 +10,5 @@ app_name = "uploader_mongo"
 
 urlpatterns = [
     path("file/mongo/", FileUploadMongoAPIView.as_view(), name="file_upload_mongo"),
-    path("file/mongo/graphql/", FileUploadGraphQLView.as_view(graphiql=True)),
+    path("graphql/mongo/", FileUploadGraphQLView.as_view(graphiql=True)),
 ]

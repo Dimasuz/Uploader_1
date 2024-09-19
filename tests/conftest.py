@@ -10,11 +10,13 @@ from model_bakery import baker
 from rest_framework.authtoken.models import Token
 
 from regloginout.models import ConfirmEmailToken, User
+from uploader.urls import api_vertion
+from uploader_1.settings import API_VERTION
 
 # from django.contrib.auth import authenticate, login, logout
 
-
-URL_BASE = "http://127.0.0.1:8000/api/v1/"
+api_vertion = API_VERTION
+URL_BASE = f"http://127.0.0.1:8000/api/{api_vertion}/"
 
 
 def get_password(n):
@@ -158,7 +160,7 @@ def file_upload(login, tmp_file, request):
 
     marker = request.node.get_closest_marker("url")
     db = marker.args[0]
-    url_view = f"file/{db}/graphql/"
+    url_view = f"graphql/{db}/"
     url = URL_BASE + url_view
 
     body = f"""

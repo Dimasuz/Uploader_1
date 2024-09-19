@@ -185,7 +185,9 @@ STATIC_ROOT = os.path.join(BASE_DIR, "static/")
 MEDIA_URL = "/media/"
 MEDIA_ROOT = os.path.join(BASE_DIR, "media/")
 
-FILES_UPLOADED = os.path.join(MEDIA_ROOT, "files_uploaded/")
+FILES_DOWNLOAD = "file_download/"
+
+# FILES_UPLOADED = os.path.join(MEDIA_ROOT, "files_uploaded/")
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
@@ -315,6 +317,8 @@ SITE_ID = 1
 MAX_TIME_UPLOAD_FILE = os.environ.get("MAX_TIME_UPLOAD_FILE")
 
 API_VERTION = "v1"
+
+TIME_DOWNLOAD = 10  # seconds for download file by link from graphql query answer
 
 # SPECTACULAR_SETTINGS = {
 #     "TITLE": "Project Uploader_1 API",

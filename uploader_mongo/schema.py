@@ -1,18 +1,22 @@
 import asyncio
+import os
 from datetime import datetime, timedelta
 
 import graphene
 from asgiref.sync import sync_to_async
-from celery.result import AsyncResult
 from django.core.exceptions import ObjectDoesNotExist
 from graphene_file_upload.scalars import Upload
-from graphql_jwt.decorators import login_required
 from mongoengine import DoesNotExist, ValidationError
 
 from regloginout.models import User
-from regloginout.schema import CeleryType, MutationPayload, UserModelType
-from uploader_1.settings import MAX_TIME_UPLOAD_FILE
-from uploader_1.tasks import processing_file_mongo
+from regloginout.schema import CeleryType, ObjectPayload, UserModelType
+from uploader_1.settings import (
+    FILES_DOWNLOAD,
+    MAX_TIME_UPLOAD_FILE,
+    MEDIA_ROOT,
+    MEDIA_URL,
+)
+from uploader_1.tasks import file_download_delete_mongo, processing_file_mongo
 from uploader_mongo.models import UploadFileMongo
 
 
@@ -70,16 +74,31 @@ def check_user_file_id(token, file_id, *args, **kwargs):
 
 
 class Query(graphene.ObjectType):
-    celery = graphene.Field(CeleryType, task_id=graphene.String(required=True))
+    file_download_mongo = graphene.Field(
+        ObjectPayload,
+        file_id=graphene.String(required=True),
+        token=graphene.String(required=True),
+    )
 
-    def resolve_celery(self, info, task_id):
-        try:
-            task = AsyncResult(task_id)
-            task_status = task.status
-            task_result = task.ready()
-            return CeleryType(task_status=task_status, task_result=task_result)
-        except Exception as err:
-            return err
+    def resolve_file_download_mongo(self, info, token, file_id):
+        download_file = check_user_file_id(token, file_id)
+
+        if not isinstance(download_file, UploadFileMongo):
+            return ObjectPayload(
+                message=download_file["status"],
+                errors=download_file["errors"],
+            )
+
+        file_download = os.path.join(MEDIA_ROOT, FILES_DOWNLOAD, file_id)
+
+        with open(file_download, "wb") as f:
+            f.write(download_file.file.read())
+
+        message = {"file_url": MEDIA_URL + FILES_DOWNLOAD + file_id}
+
+        file_download_delete_mongo.delay(file_download, datetime.now())
+
+        return ObjectPayload(message=message)
 
 
 # Mutetions
@@ -111,7 +130,7 @@ async def handle_uploaded_file(file, user):
     return {"result": False, "error": "UPLOAD_TIMED_OUT"}
 
 
-class UploadFileMongoMutation(MutationPayload, graphene.Mutation):
+class UploadFileMongoMutation(ObjectPayload, graphene.Mutation):
     class Arguments:
         file = Upload(required=True)
         token = graphene.String(required=True)
@@ -155,7 +174,7 @@ class UploadFileMongoMutation(MutationPayload, graphene.Mutation):
             return UploadFileMongoMutation(errors=errors, status=404)
 
 
-class DeleteFileMongoMutation(MutationPayload, graphene.Mutation):
+class DeleteFileMongoMutation(ObjectPayload, graphene.Mutation):
     class Arguments:
         file_id = graphene.String(required=True)
         token = graphene.String(required=True)
@@ -179,7 +198,7 @@ class DeleteFileMongoMutation(MutationPayload, graphene.Mutation):
         return DeleteFileMongoMutation(message=message, status=200)
 
 
-class ChangeFileMongoMutation(MutationPayload, graphene.Mutation):
+class ChangeFileMongoMutation(ObjectPayload, graphene.Mutation):
     class Arguments:
         file_id = graphene.String(required=True)
         token = graphene.String(required=True)

@@ -1,11 +1,12 @@
 import os
 import warnings
+from contextlib import suppress
 
 import pytest
 from graphene_file_upload.django.testing import file_graphql_query
 from mongoengine import DoesNotExist
 
-from uploader.models import UploadFile
+from uploader_1.settings import FILES_DOWNLOAD, MEDIA_ROOT, MEDIA_URL
 from uploader_mongo.models import UploadFileMongo
 
 from .conftest import URL_BASE
@@ -15,7 +16,7 @@ warnings.filterwarnings(action="ignore")
 pytestmark = pytest.mark.django_db
 
 db = "mongo"
-url_view = f"file/{db}/graphql/"
+url_view = f"graphql/{db}/"
 url = URL_BASE + url_view
 
 
@@ -98,14 +99,14 @@ def test_delete(api_client, file_upload):
     assert not file
 
 
-# file/mongo/ PUT
+# processing
 @pytest.mark.url(db)
 def test_processing_file(file_upload, api_client):
     # prepare file
     token, response = file_upload
     file_id = response.json()["data"][f"file_mongo_upload"]["message"]["file_id"]
 
-    # change
+    # processing
     body = """
            mutation testUploadMutation($file_id: String!, $token: String!) {
                file_mongo_change(file_id: $file_id, token: $token) {
@@ -128,6 +129,45 @@ def test_processing_file(file_upload, api_client):
 
     uploaded_file = UploadFileMongo.objects.get(pk=file_id)
     uploaded_file.delete()
+
+
+# download
+@pytest.mark.url(db)
+def test_processing_file(file_upload, api_client):
+    # prepare file
+    token, response = file_upload
+    file_id = response.json()["data"][f"file_mongo_upload"]["message"]["file_id"]
+
+    # processing
+    url = URL_BASE + "graphql/"
+    body = """
+         query GetFile($token: String!, $file_id: String!) {
+            file_download_mongo(token: $token, file_id: $file_id) {
+                message
+                errors
+            }
+         }
+        """
+
+    response = api_client.post(
+        url,
+        data={"query": body, "variables": {"token": token, "file_id": file_id}},
+        format="json",
+    )
+
+    file_download = os.path.join(MEDIA_ROOT, FILES_DOWNLOAD, file_id)
+    file_url = MEDIA_URL + FILES_DOWNLOAD + file_id
+
+    assert response.status_code == 200
+    assert response.json()["data"]["file_download_mongo"]["errors"] == []
+    assert (
+        response.json()["data"]["file_download_mongo"]["message"]["file_url"]
+        == file_url
+    )
+
+    if os.path.exists(file_download):
+        with suppress(OSError):
+            os.remove(file_download)
 
 
 # pytest tests/test_uploader_graphql_mongo.py

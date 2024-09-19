@@ -5,9 +5,13 @@ from datetime import datetime, timedelta
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import FileResponse, JsonResponse
-from drf_spectacular.utils import (OpenApiExample, OpenApiParameter,
-                                   OpenApiResponse, extend_schema,
-                                   inline_serializer)
+from drf_spectacular.utils import (
+    OpenApiExample,
+    OpenApiParameter,
+    OpenApiResponse,
+    extend_schema,
+    inline_serializer,
+)
 from rest_framework import serializers, status
 from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.response import Response

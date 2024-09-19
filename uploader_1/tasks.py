@@ -1,10 +1,13 @@
+import os
 import time
+from contextlib import suppress
 from datetime import datetime
 
 from django.conf import settings
 from django.core.mail import EmailMultiAlternatives
 
 from uploader_1.celery import app
+from uploader_1.settings import TIME_DOWNLOAD
 from uploader_mongo.models import UploadFileMongo
 
 
@@ -55,3 +58,19 @@ def processing_file_mongo(file_id):
     time.sleep(5)
 
     return str(file_modify.id)
+
+
+# task for deleting temp download file
+@app.task
+def file_download_delete_mongo(file_path, time_query):
+
+    time_delete = time_query + datetime.timedelta(seconds=TIME_DOWNLOAD)
+
+    while time_delete > datetime.now():
+        time.sleep(1)
+
+    if os.path.exists(file_path):
+        with suppress(OSError):
+            os.remove(file_path)
+
+    return True
