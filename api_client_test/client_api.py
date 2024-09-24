@@ -12,7 +12,7 @@ TOKEN = ""
 
 # url_adress = "0:0:0:0"
 url_adress = "127.0.0.1"
-# url_adress = "193.227.241.254"
+url_adress = "193.227.241.162"
 
 url_port = "8000"
 api_version = "api/v1"

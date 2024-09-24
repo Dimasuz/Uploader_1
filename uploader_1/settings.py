@@ -277,9 +277,9 @@ SERVER_EMAIL = EMAIL_HOST_USER
 
 # Auth0 settings
 # SOCIAL_AUTH_TRAILING_SLASH = False  # Remove trailing slash from routes
-AUTH0_DOMAIN = os.environ.get("AUTH0-DOMAIN")
-AUTH0_CLIENT_ID = os.environ.get("AUTH0-CLIENT-ID")
-AUTH0_CLIENT_SECRET = os.environ.get("AUTH0-CLIENT-SECRET")
+AUTH0_DOMAIN = os.environ.get("AUTH0_DOMAIN")
+AUTH0_CLIENT_ID = os.environ.get("AUTH0_CLIENT_ID")
+AUTH0_CLIENT_SECRET = os.environ.get("AUTH0_CLIENT_SECRET")
 # SOCIAL_AUTH_AUTH0_SCOPE = [
 #     'openid',
 #     'profile',

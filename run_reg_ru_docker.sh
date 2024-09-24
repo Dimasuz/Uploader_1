@@ -18,6 +18,3 @@ apt update
 apt install docker-compose-plugin
 docker compose version
 
-$sudo apt update
-$sudo apt install docker-compose-plugin
-$docker compose version
