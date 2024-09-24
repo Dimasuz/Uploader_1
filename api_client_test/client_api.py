@@ -355,15 +355,15 @@ def celery_status(task_id=None):
         while celery_status != "SUCCESS":
             #  or celery_status != 'FAILURE'
             response, json_status = base_request(
-                url_view=url_view, method="get", params={"Task_id": task_id}
+                url_view=url_view, method="get", params={"task_id": task_id}
             )
             celery_status = response.json()["Status"]
-            file = response.json()["Result"]
+            # file = response.json()["Result"]
             time.sleep(1)
             # if not celery_status == "SUCCESS":
             #     if input("Stop? y/n") == "y":
             #         return celery_status
-        return celery_status, file
+        return celery_status
 
 
 def api_test(token=None, url_store="disk"):
@@ -377,7 +377,8 @@ def api_test(token=None, url_store="disk"):
         # регистраиця нового пользователя
         if a == "0":
             print("\nUSER REGISTRATION:")
-            email = str(uuid.uuid4())
+            # email = str(uuid.uuid4())
+            email = '6021185'
             email = email + "@mail.ru"
             password = f"Password_{email}"
             task, token = user_register(email=email, password=password)
