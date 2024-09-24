@@ -7,23 +7,23 @@ from tempfile import NamedTemporaryFile
 
 import requests
 
-# TOKEN = "5a9da05f4a2443a4527cc5822a085552ddce0e52"
-TOKEN = "211dad60e1ce7f1752a03a4e60cfa148f064560a"
+TOKEN = ""
+# TOKEN = "211dad60e1ce7f1752a03a4e60cfa148f064560a"
 
 # url_adress = "0:0:0:0"
 url_adress = "127.0.0.1"
-# url_adress = "79.174.82.110"
+# url_adress = "193.227.241.254"
+
 url_port = "8000"
 api_version = "api/v1"
-url_base = f"http://{url_adress}:{url_port}/{api_version}/"
 
+url_base = f"http://{url_adress}:{url_port}/{api_version}/"
 # url_base = 'http://0.0.0.0:8000/api/v1/auth0/'
 
-add_url_file_view = ""
+# add_url_file_view = ""
 # add_url_file_view = "mongo/"
 
-
-time_now = str(datetime.now())[11:20]
+time_now = str(datetime.now()).replace(":", "-").replace(" ", "_")
 
 
 def base_request(
@@ -51,18 +51,19 @@ def base_request(
             data=data,
         )
     print(response.status_code)
-    try:
-        response.json()
-    except BaseException as e:
-        print("JSON ERROR:")
-        pprint(e)
-        print("RESPONSE TEXT:")
-        pprint(response.text)
-        return response, None
-    else:
-        print("JSON:")
-        pprint(response.json())
-        return response, True
+    if response.status_code != 204:
+        try:
+            response.json()
+            print("JSON:")
+            pprint(response.json())
+        except BaseException as e:
+            print("ERROR.")
+            pprint(e)
+            print("RESPONSE TEXT:")
+            pprint(response.text)
+
+    return response, True
+
 
 
 def get_headers(token=None, content_type=None):
@@ -85,15 +86,17 @@ def user_register(email=None, password=None):
     if not email:
         email = int(input("Введите email: "))
     if not password:
-        password = int(input("Введите пароль: "))
+        password = int(input("Введите пароль или Enter: "))
+        if not password:
+            password = f"Password_{email}"
     data = {
         "first_name": f"first_name_{email}",
         "last_name": f"last_name_{email}",
         "email": email,
-        "password": f"Password_{email}",
+        "password": password,
     }
     response, json_status = base_request(url_view=url_view, method="post", data=data)
-    if response.status_code == 200 and json_status:
+    if response.status_code == 201 and json_status:
         if response.json()["Status"] == False:
             task_id = None
             token_confirm = None
@@ -133,7 +136,7 @@ def login(email=None, password=None):
         "password": password,
     }
     response, json_status = base_request(url_view=url_view, method="post", data=data)
-    if response.status_code == 200 and json_status:
+    if response.status_code == 202 and json_status:
         if response.json()["Status"] == False:
             token_login = None
         else:
@@ -222,8 +225,7 @@ def password_reset_confirm(token=None, password=None):
 
 
 # ------------------------------------
-# UPLOAD FILE
-
+# FILE
 
 # file/upload/
 def upload(token=None, data=None):
@@ -293,9 +295,10 @@ def download(
         with open(downloaded_file, "rb") as f:
             print(f.read())
         # time.sleep(5)
-        if input("Удалить скаченный файл? Y: "):
+        if os.path.isfile(downloaded_file):
             os.remove(downloaded_file)
-            print("File deleted")
+            if not os.path.isfile(downloaded_file):
+                print("Downloaded file deleted.")
     else:
         return response
 
@@ -364,24 +367,47 @@ def celery_status(task_id=None):
 
 
 def api_test(token=None, url_store="disk"):
-    a = input("1 - операции с пользователями, \n2 - операции с файлами\n: ")
+    a = input("1 - users, \n2 - files\n: ")
     if a == "1":
         a = input(
             "1 - user registration,\n2 - email confirm,\n3 - login,\n4 - logout,\n"
             "5 - delete user,\n6 - user deteils get,\n7 - user deteils change,\n"
-            "8 - task get,\n11 - reset password\n: "
+            "8 - task get,\n11 - reset password,\n0 - all user operations\n: "
         )
         # регистраиця нового пользователя
         if a == "0":
+            print("\nUSER REGISTRATION:")
             email = str(uuid.uuid4())
             email = email + "@mail.ru"
             password = f"Password_{email}"
-            _, token = user_register(email=email, password=password)
+            task, token = user_register(email=email, password=password)
+            print("\nCONFIRM USER EMAIL:")
             confirm(email=email, token=token)
-            token = login(email=email)
+            print("\nLOGIN USER:")
+            token = login(email=email, password=password)
+            print("\nGET USER DETAILS:")
+            data_old = details_get(token).json()
+            print(f'\nCHANGE USER DETAILS:')
+            password_new = f"new_Password_{email}"
+            data = {
+                "first_name": f"new_{time_now}_{data_old['first_name']}",
+                "last_name": f"new_{time_now}_{data_old['last_name']}",
+                "password": password_new,
+            }
+            details_post(token=token, **data)
+            print("\nGET NEW DETAILS:")
+            details_get(token=token)
+            print("\nLOGOUT USER:")
             logout(token)
-            token = login(email=email)
-            delete(token)
+            print("\nLOGIN USER WITH NEW PASSWORD:")
+            token = login(email=email, password=password_new)
+            details_get(token)
+            print("\nUSER DELETE:")
+            response = delete(token)
+            if response.status_code == 204:
+                print("\nGREATE!")
+            else:
+                print("\nSomething was going wrong...")
 
         elif a == "1":
             email = input("Введите {адрес} @mail.ru: ")
@@ -455,53 +481,57 @@ def api_test(token=None, url_store="disk"):
             password_reset()
             password_reset_confirm()
     elif a == "2":
+        b = input("postgres/sqlite3 - 1\nmongo - 2\nВыберете базу данных: ")
+        global add_url_file_view
+        if b == "1":
+            add_url_file_view = ""
+        elif b == "2":
+            add_url_file_view = "mongo/"
         a = input(
             "0 - file upload, processing, get task, download and all delete,\n"
             "1 - file upload,\n2 - file processing,\n3 - file download,\n4 - file delete,\n: "
         )
 
         if a == "0":
-            # email = input("Введите {адрес} @mail.ru: ")
-            # email = str(uuid.uuid4()) + "@mail.ru"
-            # print(f'email пользователя - {email}')
-            # password = f"Password_{email}"
-            # _, token = user_register(email=email, password=password)
-            # confirm(email=email, token=token)
-            # token = login(email=email)
-            # print(f"{token=}")
-            print("Загрузка файла.")
+            print("\nPREPARE USER:")
+            email = str(uuid.uuid4())
+            email = email + "@mail.ru"
+            password = f"Password_{email}"
+            task, token = user_register(email=email, password=password)
+            confirm(email=email, token=token)
+            token = login(email=email, password=password)
+            print("\nUPLOAD FILE BY ASYNC:")
             data = {"sync_mode": False}
-            file_id = upload(token=token, data=data).json()["File_id"]
-            print(f"Загружен файл с {file_id=}")
+            file_id_1 = upload(token=token, data=data).json()["File_id"]
+            print(f"Uploaded file with {file_id_1=}")
+            print("\nUPLOAD FILE BY SYNC:")
+            data = {"sync_mode": True}
+            file_id_2 = upload(token=token, data=data).json()["File_id"]
+            print(f"Uploaded file with {file_id_2=}")
             print()
-            # print(f"Скачивание файла с id - {file_id}.")
-            # download(
-            #     token=token,
-            #     file_id=file_id,
-            # )
-            print()
-            print(f"Обработка файла с id - {file_id}.")
-            task_id = processing(token=token, file_id=file_id)
-            print(task_id.json())
-            task_id = task_id.json()["Task_id"]
-            print(f"Запрос таски - {task_id}.")
-            print(celery_status(task_id=task_id))
-            print()
-            time.sleep(11)
-            print(f"Запрос таски - {task_id}.")
-            print(celery_status(task_id=task_id))
-            print()
-            print(f"Скачивание файла с id - {file_id}.")
-            download(
-                token=token,
-                file_id=file_id,
-            )
-            print()
-            # input("Удаление файла и пользователя.")
-            print(f"Удаление файла с id - {file_id}.")
-            file_delete(token=token, file_id=file_id)
-            # print(f"Удаление из базы пользователя.")
-            # delete(token=token)
+            print(f"PROCESSING OF FILE WITH ID - {file_id_1}.")
+            task_id = processing(token=token, file_id=file_id_1)
+            # task_id = task_id.json()["Task_id"]
+            # print(f"Запрос таски - {task_id}.")
+            # print(celery_status(task_id=task_id))
+            # print()
+            # time.sleep(11)
+            # print(f"Запрос таски - {task_id}.")
+            # print(celery_status(task_id=task_id))
+            print(f"\nDOWNLOAD FILE WITH ID - {file_id_1}:")
+            download(token=token, file_id=file_id_1,)
+            print("\nDELETE FILES AND USER:")
+            print(f"\nDelete file with id - {file_id_1}.")
+            file_delete(token=token, file_id=file_id_1)
+            print(f"\nDelete file with - {file_id_2}.")
+            file_delete(token=token, file_id=file_id_2)
+            print(f"\nDelete user.")
+            response = delete(token)
+            if response.status_code == 204:
+                print("\nGREATE!")
+            else:
+                print("\nSomething was going wrong...")
+
         elif a == "1":
             print(f"Загрузка файла.")
             data = {"sync_mode": False}

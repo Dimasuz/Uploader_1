@@ -248,7 +248,7 @@ def test_download_file_wrong_user(file_upload, create_token, api_client):
 
 # download wrong file_id
 @pytest.mark.url(db)
-def test_download_file_wrong_user(file_upload, create_token, api_client):
+def test_download_file_wrong_file_id(file_upload, create_token, api_client):
     # prepare file
     token, response = file_upload
     file_id = response.json()["data"][f"file_db_upload"]["message"]["file_id"]

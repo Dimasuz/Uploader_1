@@ -133,12 +133,12 @@ def test_processing_file(file_upload, api_client):
 
 # download
 @pytest.mark.url(db)
-def test_processing_file(file_upload, api_client):
+def test_dowload_file(file_upload, api_client):
     # prepare file
     token, response = file_upload
     file_id = response.json()["data"][f"file_mongo_upload"]["message"]["file_id"]
 
-    # processing
+    # download
     url = URL_BASE + "graphql/"
     body = """
          query GetFile($token: String!, $file_id: String!) {
@@ -158,16 +158,21 @@ def test_processing_file(file_upload, api_client):
     file_download = os.path.join(MEDIA_ROOT, FILES_DOWNLOAD, file_id)
     file_url = MEDIA_URL + FILES_DOWNLOAD + file_id
 
+    print(response.json())
+
     assert response.status_code == 200
-    assert response.json()["data"]["file_download_mongo"]["errors"] == []
     assert (
         response.json()["data"]["file_download_mongo"]["message"]["file_url"]
         == file_url
     )
-
+    assert os.path.exists(file_download)
     if os.path.exists(file_download):
         with suppress(OSError):
             os.remove(file_download)
+    assert not response.json()["data"]["file_download_mongo"]["errors"]
+    print(response.json()["data"]["file_download_mongo"]["errors"])
+    assert response.json()["data"]["file_download_mongo"]["errors"] == []
+
 
 
 # pytest tests/test_uploader_graphql_mongo.py
