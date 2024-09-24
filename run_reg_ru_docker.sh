@@ -14,7 +14,7 @@ apt-cache policy docker-ce
 apt install docker-ce -y
 systemctl start docker
 systemctl enable docker
-systemctl status docker
+systemctl status docker --no-pager
 apt update
 apt install docker-compose-plugin
 docker compose version

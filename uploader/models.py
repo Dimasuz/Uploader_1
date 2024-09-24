@@ -3,7 +3,7 @@ from django.db import models
 
 class UploadFile(models.Model):
     file = models.FileField()
-    file_name = models.TextField()
+    file_name = models.TextField(blank=True)
     uploaded_on = models.DateTimeField(auto_now_add=True)
     user = models.IntegerField()
 
