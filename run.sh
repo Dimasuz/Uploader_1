@@ -10,11 +10,9 @@ do
     sleep 2
 done
 
-
-
 until python3 manage.py migrate --database=db_uploader
 do
-    echo "Waiting for db to be ready..."
+    echo "Waiting for db_uploader to be ready..."
     sleep 2
 done
 
