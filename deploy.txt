@@ -1,0 +1,76 @@
+
+- проверка соединения
+ping 000.000.000.000
+
+- подключаемся к серверу
+ssh root@000.000.000.000
+
+- копируем ссылку на github и делаем git clone
+git clone https://github.com/Dimasuz/Uploader_1.git --branch master
+
+- запускаем
+bush Uploader_1/run_reg_ru_docker.sh
+
+        #!/bin/bash
+        git --version
+        python3 --version
+        cp -rT Uploder_1 ~
+        apt update
+        apt install apt-transport-https ca-certificates curl software-properties-common
+        curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add -
+        add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+        apt update
+        apt-cache policy docker-ce
+        apt install docker-ce -y
+        systemctl start docker
+        systemctl enable docker
+        systemctl status docker --no-pager
+        apt update
+        apt install docker-compose-plugin
+        docker compose version
+
+- меняем в файле зависимостей
+nano .env
+<-----------------------------------------------
+1. добавляем
+EMAIL_HOST_USER= #адрес почты отправителя
+EMAIL_HOST_PASSWORD= #пароль от api почты отправителя
+
+коммитируем (или удаляем) строки в конце
+# for localhost
+#CELERY_BROKER_URL=redis://localhost:6378/0
+#CELERY_RESULT_BACKEND=redis://localhost:6378/1
+#LOCATION_CACHE_REDIS=redis://localhost:6378/2
+#POSTGRES_HOST=localhost
+#POSTGRES_PORT=5433
+#MONGO_DB_HOST=localhost
+
+
+- For reg.ru
+если при сборке доккера будет сообщение "Connection failed [IP: 91.189.91.81 80]"
+В файле /lib/systemd/system/docker.service
+$ nano /lib/systemd/system/docker.service
+Найти строку:
+ExecStart=/usr/bin/dockerd -H fd:// --containerd=/run/containerd/containerd.sock
+И прописать значение MTU (--mtu 1450) в ней, чтобы получилось:
+ExecStart=/usr/bin/dockerd --mtu 1450 -H fd:// --containerd=/run/containerd/containerd.sock
+Затем перезапустите docker-контейнер командой
+service docker restart
+systemctl daemon-reload
+service docker restart
+Если для запуска контейнеров используется docker-compose, нужно дополнительно прописывать MTU для него (не обязательно, работает и так).
+Пример:
+`networks:   my-net:     driver: overlay     driver_opts:       com.docker.network.driver.mtu: 1450`
+После чего выставлять сеть my-net на все контейнеры.
+
+- прогнать тесты
+pytest
+
+- собрать доккеры
+sudo docker-compose up -d
+
+- войти в контейнер
+sudo docker exec -it web bash
+
+- создать суперпользователя
+sudo python manage.py createsuperuser

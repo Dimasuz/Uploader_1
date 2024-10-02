@@ -3,7 +3,7 @@
 git --version
 python3 --version
 
-cp -rT . ~
+cp -rT Uploader_1 ~
 
 apt update
 apt install apt-transport-https ca-certificates curl software-properties-common
